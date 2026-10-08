@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>大学满分攻略 · 试玩原型 v11</title>
+<title>大学满分攻略 · 试玩原型 v14</title>
 <style>
 :root{
   --text:#eef3f8;--muted:#96a4b6;--line:#35445a;--panel:#111722;--panel2:#182230;
@@ -341,6 +341,92 @@ canvas.gameCanvas{display:block;width:100%;height:520px;background:#0b111a;borde
   .calendarPaper{height:315px}.calendarMonth{font-size:72px;margin-top:45px}
   .book{grid-template-columns:1fr}.bookPage.left{display:none}.book:before{display:none}
 }
+
+
+/* v12: four genuinely different ending pages */
+.bookMini.aa:before{
+  content:"选择留下的方向";
+  position:absolute;inset:0;display:grid;place-items:center;
+  font:700 22px sans-serif;color:#445165;
+  background:linear-gradient(135deg,#edf0f4,#d8dde5)
+}
+.bookMini.ba:before{
+  content:"旧观星地图  ·  群文件";
+  position:absolute;inset:0;display:grid;place-items:center;
+  font:700 20px sans-serif;color:#d8c28f;
+  background:
+    radial-gradient(circle at 20% 65%,#f0e7c9 0 3px,transparent 4px),
+    radial-gradient(circle at 42% 42%,#f0e7c9 0 3px,transparent 4px),
+    radial-gradient(circle at 68% 28%,#f0e7c9 0 3px,transparent 4px),
+    linear-gradient(#17243b,#0e1624)
+}
+.bookMini.ab:before{
+  content:"data.csv  →  script.py  →  plot.png";
+  position:absolute;inset:0;display:grid;place-items:center;
+  font:700 18px monospace;color:#b8d0ef;
+  background:linear-gradient(145deg,#121b28,#1d2c40)
+}
+.bookMini.bb:before{
+  content:"下月观测  ✓";
+  position:absolute;inset:0;display:grid;place-items:center;
+  font:700 24px monospace;color:#e2c88e;
+  background:radial-gradient(circle at 50% 45%,#23304a,#0b111c 68%)
+}
+
+
+/* v13: transition from the final choice into the memory book */
+.preBookScene{
+  width:min(980px,92vw);
+  padding:24px;
+  border-radius:18px;
+  border:1px solid #45566d;
+  background:linear-gradient(145deg,rgba(20,28,39,.96),rgba(10,15,22,.96));
+  box-shadow:0 30px 90px #0009
+}
+.preBookTop{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:18px}
+.preBookTop h2{margin:5px 0 0;font-size:31px}
+.preBookTop .date{font-size:12px;color:#8e9db1}
+.preBookStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.preBeat{
+  min-height:180px;border:1px solid #37485f;border-radius:15px;background:#111924;
+  overflow:hidden;display:flex;flex-direction:column
+}
+.preVisual{height:105px;position:relative;background:#172131}
+.preText{padding:13px 14px;color:#c8d3e0;line-height:1.65;font-size:14px}
+.preVisual.calendarFast:before{
+  content:"9  10  11  12  1  2  3  4  5  6";
+  position:absolute;inset:0;display:grid;place-items:center;
+  font:700 20px monospace;color:#dbe6f5;letter-spacing:.12em
+}
+.preVisual.pack:before{
+  content:"□  □  □";
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-size:43px;color:#b9c5d6
+}
+.preVisual.bookDesk:before{
+  content:"▭";
+  position:absolute;left:50%;top:52%;transform:translate(-50%,-50%) rotate(-4deg);
+  font-size:92px;color:#d7c7a7;text-shadow:0 12px 25px #0008
+}
+.preBookNote{
+  margin-top:17px;padding:14px 16px;border-radius:13px;background:#0e151f;border:1px solid #34445b;
+  color:#d1dbe7;line-height:1.85
+}
+.preBookScene.fadeOut{animation:preBookOut .55s ease both}
+@keyframes preBookOut{
+  from{opacity:1;transform:scale(1)}
+  to{opacity:0;transform:scale(.985)}
+}
+
+/* book page with longer branch-specific epilogues */
+.bookPage.long p{font-size:15px;line-height:1.82;margin:6px 0}
+.bookPage .ellipsis{letter-spacing:.3em;color:#7d756a;margin:10px 0}
+
+
+/* v14: route × ending = 12 distinct epilogues */
+.bookMini.none{display:none}
+.bookPage.long{padding-top:30px}
+.bookPage.long p{font-size:14.6px;line-height:1.76;margin:5px 0}
 
 </style>
 </head>
@@ -960,55 +1046,499 @@ function afterSoph(){
 }
 function restoreDorm(){const obs=$("#obs");if(obs)obs.remove();dorm.classList.remove("hidden");hide()}
 function ending(){
-  const code=S.soph+S.junior,r=R[S.route];
-  const branchEnding={
-    AA:[
-      "大三以后，我继续沿着原来的路线走。",
-      r.aa,
-      "到毕业前，我已经能说清楚：哪些事情只是“应该做”，哪些事情是我愿意继续做。"
+  const code=S.soph+S.junior;
+
+  const routeOpen={
+    job:[
+      {title:"四年以前 · 计算机就业",mini:"route",text:[
+        "刚入学时，他把“找工作 / 计算机就业”选进了《满分攻略》。",
+        "理由很普通：专业对口，路径清楚，至少知道接下来该准备什么。",
+        "那时候的“计算机工作”还是一个很大的词。"
+      ]},
+      {title:"大一",mini:"calendar",text:[
+        "课表、作业、第一次上机考核。",
+        "有些代码只是为了交作业，也有几次，程序真的跑起来时，他会多看屏幕两秒。",
+        "《满分攻略》里，大一的两项任务被勾掉。"
+      ]}
     ],
-    BA:[
-      "大二，我去过一次观测点，也留下了一张地图。",
-      "大三，我还是把那段时间留给了原来的路线。",
-      "后来我也在那条路里慢慢找到自己真正愿意投入的部分。那张地图没有消失，只是留在了另一页。"
+    grad:[
+      {title:"四年以前 · 继续升学",mini:"route",text:[
+        "刚入学时，他把“继续升学”选进了《满分攻略》。",
+        "成绩、英语、科研经历，每一项都能被拆成明确的准备步骤。",
+        "那时他还说不清自己想研究什么，只觉得先把这条路走稳一点。"
+      ]},
+      {title:"大一",mini:"calendar",text:[
+        "课程、绩点、英语和第一次上机考核。",
+        "偶尔有一道题，他会在提交以后还想再换一种写法。",
+        "《满分攻略》里，大一的两项任务被勾掉。"
+      ]}
     ],
-    AB:[
-      "大二，我先把原来的路线走得更清楚。",
-      "大三，我把一整个学期交给了联合观测，也第一次把计算机里学过的东西用到观测记录上。",
-      "毕业前，我搜索过的词变得更杂了：软件、数据、科研工具、观测系统。没有哪一个自动变成答案。"
-    ],
-    BB:[
-      "大二，我留下了第一张观星地图。",
-      "大三再回去时，更多的是偏焦、漂移、云层和重复记录。",
-      "学期结束那天，设备收完了。我问林澈：下个月那个观测，还缺人吗？"
+    civil:[
+      {title:"四年以前 · 公共方向",mini:"route",text:[
+        "刚入学时，他把“考公 / 公共方向”选进了《满分攻略》。",
+        "要求看得见，时间表也清楚，这是一条很多人都能解释明白的路。",
+        "计算机专业在那时更像一张手里的底牌，而不是一个已经想明白的答案。"
+      ]},
+      {title:"大一",mini:"calendar",text:[
+        "课程、作业、报考信息和第一次上机考核。",
+        "他并不讨厌写程序。把一团乱的数据理顺时，甚至会有一点满足。",
+        "《满分攻略》里，大一的两项任务被勾掉。"
+      ]}
     ]
-  }[code];
+  }[S.route];
 
-  const p2=S.soph==="B"
-    ?{title:"大二",mini:"map",text:["第一次公开观测。","一张刮出来的星空照片，最后变成了观星地图。"]}
-    :{title:"大二",mini:"route",text:["路线开始变得具体。","了解、准备、验证，一件一件都有了时间。"]};
-  const p3=S.junior==="B"
-    ?{title:"大三",mini:"observe",text:["联合观测持续了一整个学期。","第一次的新鲜感过去以后，剩下的是一次次把偏差拉回来。"]}
-    :{title:"大三",mini:"material",text:["见习遴选前，我第一次认真整理过去做过的事。","那些经历不再只是散在不同学期里的记录。"]};
+  /* 这里不是 4 份通用结局，而是真正的 3 条初始路线 × 4 种选择结果。 */
+  const endingByRoute={
+    job:{
+      AA:[
+        {title:"大三下",mini:"material",text:[
+          "他参加了岗位短期见习计划的遴选。",
+          "几轮材料和面谈之后，他拿到了其中一个名额。",
+          "真正开始做事以后，他才发现，“计算机工作”这个说法其实太大了。"
+        ]},
+        {title:"见习",mini:"ab",text:[
+          "有些工作他做完就关掉。",
+          "有些问题却会一直留在脑子里。",
+          "有一次，一个很小的功能卡了两天。下班前终于跑通时，屏幕上其实什么特别的都没有发生——只是原本报错的地方安静了。",
+          "他盯着那几行输出看了一会儿，忽然觉得心情很好。"
+        ]},
+        {title:"见习 · 后来",mini:"none",text:[
+          "后来他开始给自己写一些没人要求的小工具。",
+          "有时候只是为了少点几次鼠标。",
+          "有时候只是觉得：“这里应该还能写得更好一点。”",
+          "见习结束的时候，他第一次很确定：原来自己是真的有一点喜欢写程序。",
+          "不是因为“好就业”。只是喜欢一个乱七八糟的问题，被一点点拆开，最后真的按自己的想法跑起来。"
+        ]},
+        {title:"大四",mini:"aa",text:[
+          "简历改了很多次。",
+          "笔试、面试、拒信，也慢慢变成日程表里很普通的一部分。",
+          "十一月，他收到了一份录用通知。",
+          "工作地点不是最开始设想的城市，岗位也和大一时想象的不完全一样。",
+          "但确认邮件的时候，他没有犹豫太久。",
+          "六月，他毕业了。"
+        ]},
+        {title:"后来",mini:"aa",text:[
+          "入职后的某个晚上，他加班结束得很晚。",
+          "白天那个没解决干净的问题还留在脑子里。走出地铁口时，他甚至还在想：“明天换个写法试试。”",
+          "然后他抬起头。月亮很亮，和很多年前在老家楼顶拍过的那轮很像。",
+          "他站在那里看了一会儿。",
+          "一边想着明天的代码，一边看着头顶的月亮。",
+          "好像也没什么冲突。",
+          "手机震了一下。他低头看了眼时间，继续往前走。"
+        ]}
+      ],
+      BA:[
+        {title:"大二",mini:"map",text:[
+          "他第一次从望远镜里看见了土星。",
+          "后来还帮天文社跑过几次校园里的观测点。",
+          "哪栋楼会挡住南边的天空，哪里的路灯十一点后才熄，他都顺手记了下来。",
+          "最后，那些记录变成了一张很简单的观星地图。"
+        ]},
+        {title:"大三",mini:"material",text:[
+          "联合观测计划开始招募的时候，他看了很久。",
+          "最后，他还是提交了岗位见习计划的报名材料。",
+          "真正进到公司以后，他开始知道自己喜欢什么，也知道哪些工作即使“前景不错”，自己也不想长期做。",
+          "那年之后，天文社的消息逐渐沉到了聊天列表下面。"
+        ]},
+        {title:"大四",mini:"aa",text:[
+          "他经历了完整的秋招。",
+          "最终，他进入了一家做工业软件的公司。",
+          "工作比想象中琐碎，也没有宣传页里那么漂亮。",
+          "但系统一点点被搭起来、问题真的被解决时，他还是会觉得高兴。",
+          "做了一段时间以后，他开始觉得，这确实是一件自己愿意继续做下去的事。"
+        ]},
+        {title:"很久以后",mini:"ba",text:[
+          "天文社的新生群里有人问：“学校附近第一次观测去哪比较好？”",
+          "“群文件里有张老地图。”",
+          "“体育馆后面那个点还挺准的。”",
+          "“谁做的？”",
+          "“不知道，前几届留下来的吧。”",
+          "那张图已经被改过很多次。",
+          "最早留下的几个标记，还在。"
+        ]}
+      ],
+      AB:[
+        {title:"大三",mini:"observe",text:[
+          "他没有参加那次岗位见习遴选。",
+          "同一周，他通过了天文社与观测机构联合计划的招募。",
+          "第一个月，大部分时间都在记录：日期、天气、设备状态、观测结果。",
+          "到后来，表格越来越长。"
+        ]},
+        {title:"大三 · 后来",mini:"ab",text:[
+          "有天晚上，他盯着几百行数据看了一会儿。",
+          "“这个……为什么不直接写个程序处理？”",
+          "几天之后，他做了一个很简单的脚本。",
+          "再后来，是数据清洗，是可视化，是把原本需要重复半个小时的工作压成一次运行。",
+          "项目结束时，那几个工具被一起交给了下一期成员。"
+        ]},
+        {title:"大四",mini:"ab",text:[
+          "他还是打开了招聘网站。",
+          "只是搜索框里的词，和以前不太一样了。",
+          "科学计算。科研软件。观测系统。天文数据处理。",
+          "结果并不多。有些要求完全够不到，有些地点远得离谱。",
+          "他还是一条一条看了下去。"
+        ]},
+        {title:"毕业前",mini:"ab",text:[
+          "一家普通软件公司的录用确认发到了邮箱。",
+          "两天后，联合观测项目的负责人也发来一条消息：",
+          "“之前你做的那套数据处理工具还在用。”",
+          "“我们后面有个新的项目。如果感兴趣，可以聊聊。”",
+          "两封邮件都没有被删除。"
+        ]},
+        {title:"后来",mini:"ab",text:[
+          "后来有人说，他去了那家公司。",
+          "也有人说，在一次外地观测的合照里见过他。",
+          "还有人说，他后来做的东西，已经很难简单算成“计算机”或者“天文”。",
+          "没人知道那扇门最后通向哪里。",
+          "但它确实被打开了。"
+        ]}
+      ],
+      BB:[
+        {title:"大二",mini:"map",text:[
+          "他第一次从望远镜里看见了土星。",
+          "那张观星地图后来一直留在手机里。"
+        ]},
+        {title:"大三",mini:"observe",text:[
+          "联合观测计划开始招募，他报了名。",
+          "负责人只确认了一件事：“这一组要跟一整个学期，你能保证时间吗？”",
+          "“能。”",
+          "后来的几个月并不戏剧性：天气不好，设备出问题，数据要重做，很多晚上什么都没有等到。"
+        ]},
+        {title:"学期结束",mini:"bb",text:[
+          "他开始用自己会的东西处理数据、整理记录、修改一些小工具。",
+          "学期结束那天，大家把设备收回箱子里。",
+          "“终于结束了。”",
+          "他站在旁边看了一会儿。",
+          "“下个月那个观测……还缺人吗？”"
+        ]},
+        {title:"大四",mini:"bb",text:[
+          "他仍然准备过简历，也参加过面试。",
+          "邮箱里曾经有一份需要确认的工作。",
+          "但与此同时，他还在跟下一轮观测。",
+          "有时候写程序，有时候整理数据，有时候只是凌晨两点站在仪器旁边等云过去。",
+          "六月，他毕业了。至于后来到底选了哪一个答案，没有人说得特别清楚。"
+        ]},
+        {title:"后来",mini:"bb",text:[
+          "有人说他后来还在做软件。",
+          "有人说他去某个观测站待过一段时间。",
+          "也有人说，网上有个做天文数据和观测科普的账号，很像他。",
+          "再后来，关于他的消息越来越少，也越来越不一致。",
+          "唯一比较确定的是——",
+          "他好像一直没有停下来。"
+        ]}
+      ]
+    },
 
-  S.bookPages=[
-    {title:"四年以前",mini:"calendar",text:["刚入学时，我先替自己选了一条看起来能走通的路。","那时我很想知道，什么样的大学才算没有走错。"]},
-    {title:"大一",mini:"calendar",text:["课表、作业、第一次上机考核。","《满分攻略》里，大一的两项任务被勾掉。"]},
-    p2,p3,
-    {title:"毕业前",mini:S.junior==="B"?"observe":"route",text:branchEnding},
-    {title:"最后一页",mini:"calendar",text:["墙上的照片已经比刚入学时多了很多。","它们没有替我证明哪条路更正确，只是把我真的花过时间的地方留了下来。"]}
-  ];
+    grad:{
+      AA:[
+        {title:"大三下",mini:"material",text:[
+          "他参加了课题组短期见习计划的遴选。",
+          "材料、面谈、试读论文之后，他进了一个做系统与数据方向的小组。",
+          "一开始他只是想给“继续升学”补上一段足够像样的经历。"
+        ]},
+        {title:"见习",mini:"ab",text:[
+          "真正做起来以后，他发现自己会被某些问题拖住很久。",
+          "不是因为老师要求，而是因为结果不对时，他会想知道到底错在哪。",
+          "有一次实验脚本在深夜终于跑通，指标只比之前好了一点点。",
+          "他却把结果图来回放大看了好几遍。"
+        ]},
+        {title:"见习 · 后来",mini:"none",text:[
+          "后来他开始喜欢那种感觉：先把问题问清楚，再让代码替自己验证一个猜想。",
+          "程序不再只是作业，也不只是“计算机专业应该会的东西”。",
+          "它像一件能把模糊问题慢慢磨清楚的工具。",
+          "见习结束时，他第一次能说出自己想继续追的几个研究方向。"
+        ]},
+        {title:"大四",mini:"aa",text:[
+          "材料、联系导师、复习、面试，日程表排得很满。",
+          "期间也有被拒绝的邮件，也有准备了很久却没用上的材料。",
+          "春天，他收到了一个自己愿意去的录取结果。",
+          "六月，他毕业了。"
+        ]},
+        {title:"后来",mini:"aa",text:[
+          "读研后的某个晚上，他从实验室出来得很晚。",
+          "一个还没跑完的实验留在服务器上，明早醒来才会有结果。",
+          "楼外的月亮很亮。",
+          "他停下来抬头看了一会儿，又想起刚才那段还可以再改的代码。",
+          "脚下这条路和头顶那轮月亮，好像从来不是只能留下一个。",
+          "他把电脑塞进包里，慢慢走回宿舍。"
+        ]}
+      ],
+      BA:[
+        {title:"大二",mini:"map",text:[
+          "他第一次从望远镜里看见了土星。",
+          "后来还帮天文社跑过几次校园里的观测点。",
+          "遮挡、灯光和视野被记成一张观星地图。",
+          "那是他第一次认真做一件《满分攻略》里完全没有写过的事。"
+        ]},
+        {title:"大三",mini:"material",text:[
+          "联合观测计划开始招募时，他看了很久。",
+          "最后，他还是提交了课题组短期见习的报名。",
+          "进组以后，他慢慢确认自己更愿意把时间花在另一些问题上：读论文、写实验、把一个结果追到能解释清楚。",
+          "天文社的消息则一点点沉到了列表下面。"
+        ]},
+        {title:"大四",mini:"aa",text:[
+          "他继续准备升学。",
+          "申请和面试没有想象中顺利，但最终拿到了一个愿意去的录取结果。",
+          "开学以后，研究生活也没有宣传页里那么浪漫。",
+          "可某些问题真的被自己一点点弄明白时，他仍然会觉得值得。"
+        ]},
+        {title:"很久以后",mini:"ba",text:[
+          "某届天文社新生问：“第一次观测去哪比较合适？”",
+          "有人把群文件里的旧地图转了出来。",
+          "“体育馆后面那个点现在还可以。”",
+          "“这图谁画的？”",
+          "“不知道，好像是前几届的人。”",
+          "文件已经改了很多版。",
+          "最早那几个观测标记，还在。"
+        ]}
+      ],
+      AB:[
+        {title:"大三",mini:"observe",text:[
+          "他没有去参加那次课题组见习遴选。",
+          "同一周，他通过了联合观测计划的招募。",
+          "连续记录很快堆出大量表格：日期、天气、设备状态、观测结果。",
+          "这和他想象里的“看星星”完全不是一回事。"
+        ]},
+        {title:"大三 · 后来",mini:"ab",text:[
+          "但也正是在这些记录里，他第一次把课堂里学过的算法、数据处理和真实观测接到了一起。",
+          "他写脚本清洗异常数据，做简单可视化，又开始去看一些以前不会主动点开的论文。",
+          "他发现自己真正好奇的，并不是“要不要继续升学”这个问题。",
+          "而是如果继续学下去，能不能把这些问题再往深处追一点。"
+        ]},
+        {title:"大四",mini:"ab",text:[
+          "他仍然准备了原本的计算机升学材料。",
+          "但搜索方向里多了新的词：科学计算、天文数据、计算天体物理、科研软件。",
+          "有些项目跨度太大，有些要求他暂时够不到。",
+          "他第一次认真给几个交叉方向的老师写了邮件。"
+        ]},
+        {title:"毕业前",mini:"ab",text:[
+          "一个传统计算机方向的录取结果先到了。",
+          "几天后，联合观测项目的负责人转来另一封邮件：",
+          "“有个做观测数据处理的课题组在找学生，你之前那套工具我发给他们看过。”",
+          "他把两封邮件都留在了收件箱最上面。"
+        ]},
+        {title:"后来",mini:"ab",text:[
+          "有人说，他最后还是读了计算机。",
+          "也有人说，他后来把研究方向换到了科学数据与观测相关的问题。",
+          "再往后的履历，很难说是“转行”，也很难说完全没转。",
+          "没人知道那扇门最后通向哪里。",
+          "但它确实被打开了。"
+        ]}
+      ],
+      BB:[
+        {title:"大二",mini:"map",text:[
+          "他第一次从望远镜里看见了土星。",
+          "那张观星地图后来一直留在相册和群文件里。"
+        ]},
+        {title:"大三",mini:"observe",text:[
+          "联合观测计划开始招募时，他报了名。",
+          "“这一组要跟一整个学期，你能保证时间吗？”",
+          "“能。”",
+          "那几个月里，天气、设备和数据一次次把计划打乱。",
+          "他反而越来越习惯这种没有标准答案的工作。"
+        ]},
+        {title:"学期结束",mini:"bb",text:[
+          "他用程序整理记录、处理数据，也开始读一些为了观测问题才去找的论文。",
+          "学期结束那天，设备都收回箱子里。",
+          "大家说“终于结束了”。",
+          "他却问：“下个月那个观测……还缺人吗？”"
+        ]},
+        {title:"大四",mini:"bb",text:[
+          "他没有彻底放弃升学准备。",
+          "材料交过，面试参加过，邮箱里也曾出现一份需要确认的录取结果。",
+          "与此同时，他还在跟下一轮观测，继续写脚本、整理数据、补自己缺的知识。",
+          "六月，他毕业了。",
+          "后来到底把哪封邮件当成了下一站，没人说得特别清楚。"
+        ]},
+        {title:"后来",mini:"bb",text:[
+          "有人说他后来还在读计算机。",
+          "有人说他转去了和观测数据更近的方向。",
+          "有人在一次项目名单里见过他的名字，也有人在科普账号里认出了他写东西的习惯。",
+          "关于他的消息越来越少，也越来越不一致。",
+          "唯一比较确定的是——",
+          "他好像一直没有停下来。"
+        ]}
+      ]
+    },
+
+    civil:{
+      AA:[
+        {title:"大三下",mini:"material",text:[
+          "他参加了公共事务短期见习计划的遴选。",
+          "几轮材料和面谈之后，他进了一个数字政务相关的实践岗位。",
+          "一开始，他只是想确认自己到底适不适合这条路。"
+        ]},
+        {title:"见习",mini:"ab",text:[
+          "真实工作比攻略里的词要碎得多：表格、系统、规则、来回确认的信息。",
+          "他却意外地喜欢上一件很具体的事——把那些拧在一起的流程理顺。",
+          "有一次，他顺手写了个小脚本，把原本要人工重复整理的材料自动归了类。",
+          "同事说：“这个以后还能继续用。”",
+          "那一刻他比想象中开心。"
+        ]},
+        {title:"见习 · 后来",mini:"none",text:[
+          "他慢慢发现，自己喜欢的并不是“稳定”两个字。",
+          "而是技术真的落到一个具体流程里，让一件原本麻烦的事变得顺一点。",
+          "计算机没有因为他选择公共方向就被丢在身后。",
+          "反而第一次和一件他能看见结果的事情连在了一起。"
+        ]},
+        {title:"大四",mini:"aa",text:[
+          "报名、笔试、面试、体检和等待，把大四切成很多段。",
+          "也有没进下一轮的时候。",
+          "后来，他收到了一个公共技术方向岗位的拟录用通知。",
+          "地点和最初设想的不一样，具体工作也比“考公”两个字复杂得多。",
+          "六月，他毕业了。"
+        ]},
+        {title:"后来",mini:"aa",text:[
+          "工作后的某个晚上，他从办公楼出来。",
+          "白天那个流程优化的问题还没完全解决，他已经想好明天先试哪一种写法。",
+          "抬头时，月亮正挂在楼顶上方。",
+          "他站着看了一会儿。",
+          "脚下有第二天要继续处理的事，头顶也还有那轮月亮。",
+          "好像并不需要把其中一个解释成另一个的代价。",
+          "他收起手机，继续往前走。"
+        ]}
+      ],
+      BA:[
+        {title:"大二",mini:"map",text:[
+          "他第一次从望远镜里看见了土星。",
+          "后来还帮天文社跑过几次校园里的观测点。",
+          "哪边的楼会遮挡，哪盏路灯几点熄，他都记进了那张地图。",
+          "攻略里没有这一项，但那段时间他确实很认真。"
+        ]},
+        {title:"大三",mini:"material",text:[
+          "联合观测计划开始招募时，他犹豫了很久。",
+          "最后，他还是提交了公共事务短期见习的报名。",
+          "见习让他第一次看见，技术、规则和真实办事流程是怎么碰在一起的。",
+          "他决定继续沿着这条路准备下去。"
+        ]},
+        {title:"大四",mini:"aa",text:[
+          "他经历了报名、考试、面试和漫长等待。",
+          "最终进入了一个和数字公共服务相关的岗位。",
+          "工作并不总有成就感，很多时候只是非常具体、非常琐碎的问题。",
+          "但偶尔一个流程被理顺、一项重复工作被自动化，他还是会觉得：这件事值得继续做。"
+        ]},
+        {title:"很久以后",mini:"ba",text:[
+          "天文社新生群里有人问：“学校附近第一次观测去哪比较好？”",
+          "“群文件里有张老地图。”",
+          "“体育馆后面那个点还挺准的。”",
+          "“谁做的？”",
+          "“不知道，前几届留下来的吧。”",
+          "图被更新过很多次。",
+          "最早留下的几个标记，还在。"
+        ]}
+      ],
+      AB:[
+        {title:"大三",mini:"observe",text:[
+          "他没有去参加那次公共事务见习遴选。",
+          "同一周，他加入了联合观测计划。",
+          "真正开始以后，事情很快从“看星星”变成了大量记录、设备状态和重复核对。",
+          "他反而开始用自己熟悉的办法处理这些麻烦。"
+        ]},
+        {title:"大三 · 后来",mini:"ab",text:[
+          "他写脚本整理观测记录，给表格做检查，也帮着把零散数据做成更容易交接的格式。",
+          "有次天文馆的工作人员说：“这种东西其实我们一直缺人做。”",
+          "他第一次意识到，公共方向也不只有一张考试表。",
+          "公共机构、科学传播、数字系统和技术岗位之间，原来还有很多自己以前没看见的缝隙。"
+        ]},
+        {title:"大四",mini:"ab",text:[
+          "他仍然关注原来的公共方向岗位。",
+          "只是搜索词开始变得奇怪起来：科技馆数字系统、公共科研机构技术岗、科普数据平台、观测系统维护。",
+          "职位很少，也没有哪条路线能像攻略一样给出完整步骤。",
+          "他还是一条一条看了下去。"
+        ]},
+        {title:"毕业前",mini:"ab",text:[
+          "一个数字公共服务相关岗位向他发来了后续确认。",
+          "几天后，联合观测项目的负责人也发来消息：",
+          "“我们后面要把记录系统重新做一遍，你之前写的工具挺好用。”",
+          "“如果愿意，可以过来聊聊。”",
+          "两条消息都没有被删掉。"
+        ]},
+        {title:"后来",mini:"ab",text:[
+          "有人说他最后去了公共技术岗位。",
+          "也有人在某个科学场馆的项目名单里看到过他的名字。",
+          "还有人说，他后来做的东西已经很难分清是“公共服务”“软件”还是“天文”。",
+          "没人知道那扇门最后通向哪里。",
+          "但它确实被打开了。"
+        ]}
+      ],
+      BB:[
+        {title:"大二",mini:"map",text:[
+          "他第一次从望远镜里看见了土星。",
+          "那张观星地图后来一直留在天文社的群文件里。"
+        ]},
+        {title:"大三",mini:"observe",text:[
+          "联合观测计划开始招募，他报了名。",
+          "“这一组要跟一整个学期，你能保证时间吗？”",
+          "“能。”",
+          "天气不好、设备故障、记录返工，很多晚上什么都没有等到。",
+          "他却越来越熟悉这套没有标准答案的节奏。"
+        ]},
+        {title:"学期结束",mini:"bb",text:[
+          "他开始用程序整理记录，也帮忙把一些交接流程做得更清楚。",
+          "学期结束那天，大家把设备收回箱子里。",
+          "“终于结束了。”",
+          "他站在旁边看了一会儿。",
+          "“下个月那个观测……还缺人吗？”"
+        ]},
+        {title:"大四",mini:"bb",text:[
+          "他仍然报名过公共方向的考试，也参加过面试。",
+          "有一段时间，准考证和观测排班表就放在同一个桌面文件夹里。",
+          "与此同时，他还在跟下一轮观测：写程序、整理数据、凌晨等云过去。",
+          "六月，他毕业了。",
+          "后来到底把哪一种生活留得更多，没有人说得特别清楚。"
+        ]},
+        {title:"后来",mini:"bb",text:[
+          "有人说他后来进了公共技术岗位。",
+          "有人说他在科学场馆或观测项目里待过。",
+          "还有人说，网上有个把观测数据做得很清楚的科普账号，很像他。",
+          "再后来，关于他的消息越来越少，也越来越不一致。",
+          "唯一比较确定的是——",
+          "他好像一直没有停下来。"
+        ]}
+      ]
+    }
+  };
+
+  S.bookPages=[...routeOpen,...endingByRoute[S.route][code]];
   S.bookIndex=0;
-  S.stage="ending";
-  renderBook();
+  S.stage="prebook";
+  graduationTransition();
+}
+
+function graduationTransition(){
+  show(`<div id="preBookScene" class="preBookScene fade">
+    <div class="preBookTop">
+      <div><div class="kicker">毕业前最后一晚</div><h2>宿舍开始变空。</h2></div>
+      <div class="date">六月</div>
+    </div>
+    <div class="preBookStrip">
+      <div class="preBeat">
+        <div class="preVisual calendarFast"></div>
+        <div class="preText">这一年最后几页日历翻得很快。</div>
+      </div>
+      <div class="preBeat">
+        <div class="preVisual pack"></div>
+        <div class="preText">书、衣服、杂物一点点装进纸箱。</div>
+      </div>
+      <div class="preBeat">
+        <div class="preVisual bookDesk"></div>
+        <div class="preText">桌角还压着一本这几年零零散散留下来的本子。</div>
+      </div>
+    </div>
+    <div class="preBookNote">
+      收东西的时候，很多原本以为忘了的事又被翻了出来。
+    </div>
+    <div class="actions"><button class="btn" data-action="openMemoryBook">翻开本子</button></div>
+  </div>`,"soft");
 }
 function bookMiniClass(mini){return mini||"calendar"}
 function pageHTML(page,no,side){
   if(!page)return `<div class="bookPage ${side}"></div>`;
-  return `<div class="bookPage ${side}">
+  const long=page.text.length>6?" long":"";
+  return `<div class="bookPage ${side}${long}">
     <div class="kicker">${page.title}</div>
     <div class="bookMini ${bookMiniClass(page.mini)}"></div>
-    ${page.text.map(x=>`<p>${x}</p>`).join("")}
+    ${page.text.map(x=>x==="……"?`<p class="ellipsis">……</p>`:`<p>${x}</p>`).join("")}
     <div class="pageNo">${no}</div>
   </div>`;
 }
@@ -1026,22 +1556,71 @@ function renderBook(){
   </div>`,"soft");
 }
 function finalWall(){
+  const code=S.soph+S.junior;
+  const route=R[S.route];
+
   const middle=S.soph==="B"
     ?`<div class="polaroid" style="--r:-2deg;--bgimg:linear-gradient(#09152a,#070d16)"><div class="img"></div><div class="cap">大二。<br>第一次做出来的观星地图。</div></div>`
-    :`<div class="polaroid" style="--r:-2deg;--bgimg:linear-gradient(135deg,#1e3048,#0e1723)"><div class="img"></div><div class="cap">大二。<br>那条被自己跑通的路线。</div></div>`;
+    :`<div class="polaroid" style="--r:-2deg;--bgimg:linear-gradient(135deg,#1e3048,#0e1723)"><div class="img"></div><div class="cap">大二。<br>${route.a2}之后留下的记录。</div></div>`;
+
   const junior=S.junior==="B"
     ?`<div class="polaroid" style="--r:2deg;--bgimg:radial-gradient(circle at 58% 44%,#e4d7ae 0 7%,#08101e 9%)"><div class="img"></div><div class="cap">大三。<br>一整学期里，很普通的某个晚上。</div></div>`
-    :`<div class="polaroid" style="--r:2deg;--bgimg:linear-gradient(145deg,#263954,#111824)"><div class="img"></div><div class="cap">大三。<br>见习遴选前整理过的材料。</div></div>`;
-  show(`<div class="finalWall fade"><div class="kicker">毕业前最后一晚</div><h2>照片墙已经和刚入学时不一样了。</h2>
+    :`<div class="polaroid" style="--r:2deg;--bgimg:linear-gradient(145deg,#263954,#111824)"><div class="img"></div><div class="cap">大三。<br>${route.a3}前整理过的材料。</div></div>`;
+
+  const routeLast={
+    job:{
+      AA:["毕业前。","被划掉很多次以后，最后留下来的岗位方向清单。"],
+      BA:["群文件里的旧观星地图。","最早那几个标记还在。"],
+      AB:["毕业前的电脑。","代码窗口旁边开着一份观测数据。"],
+      BB:["毕业前。","面试日程旁边，记着下一次观测时间。"]
+    },
+    grad:{
+      AA:["毕业前。","录取邮件旁边，还放着那份改了很多次的实验记录。"],
+      BA:["群文件里的旧观星地图。","最早那几个标记还在。"],
+      AB:["毕业前。","研究方向列表旁边，开着一份观测数据。"],
+      BB:["毕业前。","升学材料和下一轮观测排班放在同一个文件夹里。"]
+    },
+    civil:{
+      AA:["毕业前。","报考材料旁边，留着见习时写过的小工具。"],
+      BA:["群文件里的旧观星地图。","最早那几个标记还在。"],
+      AB:["毕业前。","公共技术岗位页面旁边，开着观测记录系统。"],
+      BB:["毕业前。","准考证和下一次观测时间，挤在同一张日历上。"]
+    }
+  }[S.route][code];
+
+  const routeCaption={
+    job:{
+      AA:"原来的路没有消失。不同的是，他已经知道自己是真的喜欢其中一些东西。",
+      BA:"有些认真做过的事没有变成职业，却还是在别人的下一次出发里留下了位置。",
+      AB:"最开始叫作“计算机就业”的路，后来第一次和另一片天空接了起来。",
+      BB:"工作仍然是一种可能，但下一次观测也已经被他写进日历。"
+    },
+    grad:{
+      AA:"继续升学不再只是攻略里的下一格；他已经知道自己为什么还想把问题追得更深。",
+      BA:"他回到了升学路线，但那张地图没有因此变成一段需要被否定的岔路。",
+      AB:"原本的升学计划没有被扔掉，只是问题的方向慢慢发生了变化。",
+      BB:"录取结果可以等着确认，下一次观测也一样真实地占着一个晚上。"
+    },
+    civil:{
+      AA:"他最后留下来的，不只是“稳定”这两个字，还有技术真正让一件事变顺的乐趣。",
+      BA:"公共方向继续往前走，观星也没有因此变成一段无用的时间。",
+      AB:"他第一次发现，公共方向、计算机和天文之间并没有一道画好的边界。",
+      BB:"考试和岗位仍在生活里，但他已经不再等别人先证明观测值得花时间。"
+    }
+  }[S.route][code];
+
+  show(`<div class="finalWall fade">
+    <div class="kicker">毕业前最后一晚 · ${route.name} · ${code}</div>
+    <h2>照片墙已经和刚入学时不一样了。</h2>
     <div class="photoGrid">
       <div class="polaroid" style="--r:-3deg;--bgimg:linear-gradient(#18294a,#0d1524)"><div class="img"></div><div class="cap">老家楼顶。<br>最早带来的那张。</div></div>
       <div class="polaroid" style="--r:3deg;--bgimg:radial-gradient(circle at 60% 40%,#e8dfc0 0 16%,#263753 18%)"><div class="img"></div><div class="cap">那张一直拍不清的月亮。</div></div>
       <div class="polaroid" style="--r:1deg;--bgimg:linear-gradient(145deg,#26344a,#111824)"><div class="img"></div><div class="cap">大一。<br>第一次上机考核结束。</div></div>
       ${middle}
       ${junior}
-      <div class="polaroid" style="--r:-1deg;--bgimg:linear-gradient(#31405a 0 68%,#1b2027 69%)"><div class="img"></div><div class="cap">毕业前。<br>宿舍里最后一张。</div></div>
+      <div class="polaroid" style="--r:-1deg;--bgimg:${code==="BA"?"linear-gradient(#16223a,#0c1421)":code==="AB"?"linear-gradient(145deg,#18263a,#0c121b)":code==="BB"?"radial-gradient(circle at 62% 42%,#e3c98e 0 5%,#111b2d 7%)":"linear-gradient(135deg,#d8dde5 0 34%,#485a70 35% 38%,#1b2532 39%)"}"><div class="img"></div><div class="cap">${routeLast[0]}<br>${routeLast[1]}</div></div>
     </div>
-    <div class="quote">最后看了一眼墙上的照片。</div>
+    <div class="quote">${routeCaption}</div>
     <div class="actions"><button class="btn" data-action="finishGame">关灯</button></div>
   </div>`);
 }
@@ -1149,6 +1728,14 @@ document.addEventListener("click",e=>{
       if(S.obsMode==="soph"){S.soph="B";restoreDorm();afterSoph()}
       else{S.junior="B";restoreDorm();ending()}
     }
+  }
+  else if(a==="openMemoryBook"){
+    const scene=$("#preBookScene");
+    if(scene)scene.classList.add("fadeOut");
+    S.stageTimer=setTimeout(()=>{
+      S.stage="ending";
+      renderBook();
+    },520);
   }
   else if(a==="bookNext"){
     const book=$("#book");if(book)book.classList.add("turn");
