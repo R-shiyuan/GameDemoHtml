@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>大学满分攻略 · 试玩原型 v11</title>
+<style>
+:root{
+  --text:#eef3f8;--muted:#96a4b6;--line:#35445a;--panel:#111722;--panel2:#182230;
+  --accent:#b7cef5;--warm:#e5c48f;--good:#a7d8b3;--bad:#e1a19c;
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;background:#05070a;color:var(--text);font-family:"Microsoft YaHei",system-ui,sans-serif;overflow:hidden}
+button,input{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.fade{animation:fade .38s ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes buzz{0%,100%{transform:rotate(5deg) translateX(0)}25%{transform:rotate(5deg) translateX(-5px)}75%{transform:rotate(5deg) translateX(5px)}}
+@keyframes cursor{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,8px)}18%,76%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+#game{position:relative;width:100%;height:100%;min-height:720px;background:#070a0f}
+#world{position:absolute;inset:0}
+.overlay{position:absolute;inset:0;z-index:80;background:#05070bef;display:flex;align-items:center;justify-content:center;padding:24px;transition:background .2s}
+.overlay.soft{background:rgba(5,7,11,.24);backdrop-filter:blur(2px)}
+
+/* opening typewriter */
+.intro{position:absolute;inset:0;z-index:120;background:#030405;display:flex;align-items:center;justify-content:center;padding:28px}
+.introBox{width:min(900px,86vw)}
+.introText{font-size:23px;line-height:1.9;white-space:pre-wrap;min-height:340px;color:#eef2f7}
+.cursor{display:inline-block;width:9px;height:1.2em;background:#dce7f7;vertical-align:-3px;animation:cursor .9s steps(1) infinite}
+.introHint{margin-top:18px;font-size:12px;color:#667589}
+
+/* pseudo 3D dorm */
+.room{position:absolute;inset:0;overflow:hidden;perspective:1050px;background:#0b0f15}
+.backWall{
+  position:absolute;left:12%;right:12%;top:4%;bottom:17%;
+  background:
+    radial-gradient(circle at 32% 22%,rgba(79,104,143,.24),transparent 28%),
+    linear-gradient(#202936,#151c27 72%,#111720);
+  border:1px solid #293341;box-shadow:inset 0 -80px 120px rgba(0,0,0,.22)
+}
+.leftWall,.rightWall{position:absolute;top:4%;bottom:17%;width:26%;background:linear-gradient(90deg,#151c26,#1e2734)}
+.leftWall{left:-8%;transform-origin:right center;transform:rotateY(58deg)}
+.rightWall{right:-8%;transform-origin:left center;transform:rotateY(-58deg)}
+.floor{
+  position:absolute;left:-9%;right:-9%;bottom:-22%;height:54%;
+  background:repeating-linear-gradient(90deg,#2d2926 0 2px,#3a342f 2px 92px);
+  transform-origin:center top;transform:rotateX(63deg);box-shadow:inset 0 65px 100px rgba(0,0,0,.52)
+}
+.window{position:absolute;left:15%;top:9%;width:25%;height:35%;background:linear-gradient(#0a1428,#15203a 62%,#0a1320);border:10px solid #29313b}
+.window:before,.window:after{content:"";position:absolute;background:#2c3541}
+.window:before{left:49%;top:0;width:6px;height:100%}.window:after{left:0;top:50%;height:6px;width:100%}
+.star{position:absolute;width:3px;height:3px;border-radius:50%;background:#edf4ff;opacity:.74}
+.bed{position:absolute;left:8%;bottom:15%;width:30%;height:16%;background:linear-gradient(#30425c,#243247);transform:skewX(-7deg);box-shadow:0 24px 50px rgba(0,0,0,.5)}
+.desk{position:absolute;left:41%;right:7%;bottom:15%;height:13%;background:linear-gradient(#6a5642,#493a2e);transform:skewX(-4deg);box-shadow:0 18px 35px rgba(0,0,0,.45)}
+.monitor{position:absolute;left:52%;bottom:29%;width:23%;height:25%;background:#0b1017;border:9px solid #2a3039;border-radius:7px;box-shadow:0 14px 24px rgba(0,0,0,.4)}
+.monitor:before{content:"";position:absolute;inset:0;background:linear-gradient(145deg,#17243a,#0c121b)}
+.monitor.active{box-shadow:0 0 31px rgba(170,200,245,.44)}
+.monitorStand{position:absolute;left:62.7%;bottom:22%;width:3%;height:8%;background:#2d333b}
+.monitorBase{position:absolute;left:59.2%;bottom:20.5%;width:10%;height:2.4%;background:#343b45;border-radius:50%}
+.phoneProp{
+  position:absolute;left:73%;bottom:15.8%;width:9.2%;height:13.5%;z-index:12;
+  background:linear-gradient(#27354b,#111923);border:4px solid #485362;border-radius:12px;
+  transform:rotateZ(-9deg) skewX(-3deg);box-shadow:0 10px 20px rgba(0,0,0,.62)
+}
+.phoneProp:before{content:"";position:absolute;left:8%;right:8%;top:10%;bottom:10%;border-radius:7px;background:linear-gradient(145deg,#18345c,#0e1724);box-shadow:inset 0 0 0 1px #3d587b}
+.phoneProp.active{animation:buzz .28s ease 4;box-shadow:0 0 25px rgba(176,205,248,.55),0 12px 18px rgba(0,0,0,.5)}
+.door{position:absolute;right:11%;top:13%;width:13%;height:59%;background:linear-gradient(90deg,#332b26,#463a32 55%,#302824);border:8px solid #171a1f}
+.door:after{content:"";position:absolute;left:10%;top:52%;width:13px;height:13px;border-radius:50%;background:#b39a6d}
+.door.active{box-shadow:0 0 30px rgba(174,201,244,.32)}
+
+/* photo wall */
+.photoWall{position:absolute;left:48%;top:9%;width:28%;height:28%;transform:rotateY(-2deg);z-index:2}
+.pinPhoto{position:absolute;background:#e8e2d7;border:7px solid #e8e2d7;box-shadow:0 6px 16px rgba(0,0,0,.42)}
+.pinPhoto:after{content:"";position:absolute;left:50%;top:-11px;width:8px;height:8px;border-radius:50%;background:#a87e54}
+.pinPhoto.sky{left:2%;top:5%;width:42%;height:42%;transform:rotate(-5deg);background:linear-gradient(#18294a,#0d1524)}
+.pinPhoto.sky:before{content:"";position:absolute;inset:12px;background:radial-gradient(circle at 20% 30%,#fff 0 1px,transparent 2px),radial-gradient(circle at 70% 28%,#fff 0 1px,transparent 2px),radial-gradient(circle at 45% 70%,#fff 0 1px,transparent 2px)}
+.pinPhoto.moon{left:49%;top:1%;width:39%;height:44%;transform:rotate(4deg);background:#263753}
+.pinPhoto.moon:before{content:"";position:absolute;width:34%;aspect-ratio:1;border-radius:50%;left:45%;top:28%;background:#e8dfc0;filter:blur(4px);box-shadow:0 0 18px #f3e4b766}
+.pinPhoto.roof{left:22%;top:54%;width:44%;height:38%;transform:rotate(2deg);background:linear-gradient(#202b3d 0 65%,#11161c 65%)}
+.pinPhoto.roof:before{content:"";position:absolute;left:9%;right:9%;bottom:16%;height:20%;background:#333b44;transform:skewX(-12deg)}
+
+.hot{position:absolute;z-index:20;border:0;background:transparent;color:white}
+.hot:disabled{pointer-events:none}
+.hot span{position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);opacity:0;white-space:nowrap;padding:7px 10px;border-radius:999px;background:#0a0e14db;border:1px solid #3d4b60;font-size:12px;color:#dbe4ef;transition:.18s}
+.hot:hover span,.hot.available span{opacity:1}
+.hot.available:after{content:"";position:absolute;inset:0;border:1px solid rgba(185,209,247,.42);border-radius:18px;animation:blink 1.5s ease infinite}
+#photoHot{left:46%;top:7%;width:32%;height:33%}
+#phoneHot{left:70%;bottom:11%;width:16%;height:21%}
+#pcHot{left:49%;bottom:26%;width:30%;height:31%}
+#doorHot{right:8.8%;top:10%;width:19%;height:66%}
+.toast{position:absolute;z-index:35;left:50%;bottom:6%;transform:translateX(-50%);padding:9px 13px;border-radius:999px;background:#070b11cc;border:1px solid #344157;color:#bcc7d5;font-size:12px;opacity:0;pointer-events:none}
+.toast.show{animation:toast 2.2s ease both}
+
+/* common */
+.card{width:min(940px,92vw);max-height:88vh;overflow:auto;background:linear-gradient(#151c26,#10161f);border:1px solid #344157;border-radius:20px;padding:28px;box-shadow:0 30px 100px rgba(0,0,0,.65);animation:rise .35s ease both}
+.center{text-align:center}.kicker{font-size:11px;letter-spacing:.18em;color:#8d9db2;text-transform:uppercase}
+.quote{margin:16px 0;padding:14px 16px;border-left:3px solid #7f94b5;background:#0f151e;line-height:1.8;color:#d8e1ec}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.btn{border:1px solid #52647e;background:#25324a;color:#fff;border-radius:11px;padding:11px 16px;min-width:110px}
+.btn.alt{background:#141b26}.btn:hover:not(:disabled){background:#31415d}.btn:disabled{opacity:.3;cursor:default}
+.story{width:min(860px,88vw);text-align:center}.story .chapter{font-size:11px;letter-spacing:.22em;color:#8292a8}.story .big{font-size:50px;line-height:1.15;font-weight:700;margin:12px 0}.story p{font-size:20px;line-height:1.85;color:#dde5ef;margin:10px 0}.story .small{font-size:14px;color:#8997aa}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.info{min-height:112px;padding:15px;border:1px solid #3a485f;border-radius:13px;background:#151e2a;color:white;text-align:left}
+.feedback{margin-top:14px;padding:12px;border-radius:11px;background:#121b27;border:1px solid #34445b;color:#c8d4e2}.feedback.good{border-color:#52775c;color:#bde3c6}.feedback.bad{border-color:#7b5252;color:#e6bcbc}
+
+/* phone */
+.phoneUI{width:min(410px,92vw);height:min(700px,90vh);padding:15px;overflow:auto;border:10px solid #242932;border-radius:36px;background:#0b1017;box-shadow:0 30px 80px #000a;animation:rise .35s ease both}
+.phoneTabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}.phoneTabs button{border:1px solid #324057;background:#131b26;color:#aebaca;border-radius:11px;padding:9px}.phoneTabs button.active{background:#25344b;color:#fff;border-color:#587096}
+.widget{background:linear-gradient(145deg,#182131,#111823);border:1px solid #34435b;border-radius:19px;padding:17px;margin-bottom:12px}.widget h3{margin:0 0 4px}.widget small{color:#91a0b4}
+.guideItem{padding:8px 0;border-top:1px solid #273244;color:#d7dfea;font-size:13px}.guideItem.done:before{content:"✓ ";color:var(--good)}
+.msg{padding:12px 0;border-bottom:1px solid #283345}.msg b{display:block}.msg small{color:#8fa0b5}.msg p{font-size:13px;color:#bcc7d5;line-height:1.6;margin:5px 0 0}
+.push{padding:12px 13px;border:1px solid #45546b;border-radius:14px;background:#1a2230;margin:8px 0}.push b{display:block}.push small{color:#9cabbf}
+.choice{display:block;width:100%;text-align:left;margin:9px 0;padding:15px;border:1px solid #3a475c;background:#151d29;color:#fff;border-radius:13px}.choice small{display:block;color:#9ca9bb;margin-top:5px;line-height:1.5}
+
+/* PC + platformer */
+.pc{width:min(1100px,96vw);height:min(680px,90vh);overflow:hidden;border:11px solid #272e38;border-radius:16px;background:#0d131c;box-shadow:0 25px 80px #000a;animation:rise .35s ease both}
+.pcHeader{height:42px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;background:#151b24;color:#8796aa;font-size:12px}
+.pcBody{height:calc(100% - 42px);position:relative;overflow:auto;padding:22px}
+canvas.gameCanvas{display:block;width:100%;height:520px;background:#0b111a;border:1px solid #34445b;border-radius:14px}
+
+/* junior A */
+.portfolioBoard{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.evidencePool,.portfolio{padding:14px;border:1px solid #34435a;border-radius:14px;background:#101720;min-height:330px}
+.evidence{display:block;width:100%;padding:12px;margin:8px 0;border:1px solid #43516a;border-radius:10px;background:#182333;color:#fff;text-align:left}
+.evidence.sel{outline:2px solid #aac5ef}.portfolioSlot{display:block;width:100%;min-height:72px;border:1px dashed #4a5a72;border-radius:10px;padding:10px;margin:9px 0;color:#91a0b2;background:#111820;text-align:left}.portfolioSlot.filled{border-style:solid;background:#182333;color:white}
+
+/* outdoor pseudo 3D */
+.observatory{position:absolute;inset:0;overflow:hidden;perspective:1000px;background:radial-gradient(circle at 55% 75%,rgba(82,105,127,.18),transparent 24%),linear-gradient(#050814 0%,#091020 58%,#121821 100%)}
+.sky{position:absolute;inset:0 0 28% 0}.sky i{position:absolute;width:3px;height:3px;background:#e9f2ff;border-radius:50%;opacity:.78}
+.horizon{position:absolute;left:0;right:0;bottom:25%;height:9%;opacity:.45;background:repeating-linear-gradient(90deg,#1b2430 0 24px,#0e131a 24px 36px)}
+.obsGround{position:absolute;left:-7%;right:-7%;bottom:-20%;height:52%;background:linear-gradient(#1a2026,#0a0d12);transform-origin:center top;transform:rotateX(66deg)}
+.platform3d{position:absolute;left:16%;right:13%;bottom:13%;height:14%;background:#252a2f;transform:skewX(-5deg);box-shadow:0 20px 45px rgba(0,0,0,.55)}
+.obsTable{position:absolute;left:20%;bottom:26%;width:18%;height:5%;background:#3f4245}.obsTable:after{content:"设备箱 / 记录表";position:absolute;top:-27px;left:8px;font-size:11px;color:#97a5b8}
+.telescope{position:absolute;left:48%;bottom:27%;width:18%;height:7%;background:#b9c4d3;border-radius:999px;transform:rotate(-17deg);box-shadow:0 0 15px #dbe6f833}.telescope:after{content:"";position:absolute;width:7px;height:105px;background:#5a626c;left:53%;top:24px;transform:rotate(17deg);transform-origin:top}
+.npc{position:absolute;right:20%;bottom:25%;width:56px;height:145px;background:linear-gradient(#2e415e 0 38%,#1b2737 38%);border-radius:24px 24px 12px 12px}.npc:before{content:"";position:absolute;left:10px;top:-42px;width:37px;height:37px;border-radius:50%;background:#d0b69a}
+.sign{position:absolute;left:8%;top:10%;padding:9px 12px;border-radius:9px;border:1px solid #4c5d76;background:#0b1119bd;color:#cad6e7;font-size:12px}
+.obsHot{position:absolute;z-index:15;border:0;background:transparent;color:white}.obsHot span{position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);opacity:0;white-space:nowrap;padding:7px 10px;border-radius:999px;background:#0b1018dd;border:1px solid #3d4b60;font-size:12px;transition:.18s}.obsHot:hover span,.obsHot.available span{opacity:1}
+#npcHot{right:16%;bottom:22%;width:12%;height:32%}#scopeHot{left:44%;bottom:22%;width:28%;height:28%}.obsHot.available:after{content:"";position:absolute;inset:0;border:1px solid rgba(183,208,247,.42);border-radius:18px;animation:blink 1.4s ease infinite}
+.dialog{position:absolute;z-index:30;left:50%;bottom:5%;transform:translateX(-50%);width:min(860px,88%);padding:18px 20px;border-radius:16px;background:#0b1018ed;border:1px solid #3a475d;box-shadow:0 20px 50px #0008}.dialog .name{font-size:12px;color:#91a2b9;margin-bottom:8px}.dialog .line{font-size:18px;line-height:1.75}.dialog .next{font-size:11px;color:#718096;margin-top:7px}
+
+/* scratch-off */
+.scratchGame{width:min(1100px,95vw);display:grid;grid-template-columns:1.35fr .65fr;gap:20px;align-items:center}
+.scratchWrap{position:relative;aspect-ratio:1.65;border:1px solid #34445b;border-radius:16px;overflow:hidden;background:#050815}
+.scratchBase{position:absolute;inset:0;background:
+  radial-gradient(circle at 16% 70%,#fff 0 2px,transparent 3px),
+  radial-gradient(circle at 25% 54%,#fff 0 2px,transparent 3px),
+  radial-gradient(circle at 37% 45%,#fff 0 2px,transparent 3px),
+  radial-gradient(circle at 50% 37%,#fff 0 2px,transparent 3px),
+  radial-gradient(circle at 64% 29%,#fff 0 2px,transparent 3px),
+  radial-gradient(circle at 78% 22%,#efd08c 0 4px,transparent 5px),
+  radial-gradient(circle at 72% 74%,#fff 0 1px,transparent 2px),
+  radial-gradient(circle at 42% 18%,#fff 0 1px,transparent 2px),
+  linear-gradient(#07101f,#050815)}
+.scratchBase:after{content:"";position:absolute;left:16%;top:69%;width:64%;height:2px;background:linear-gradient(90deg,#7fa0cd55,#d6bd7e99);transform:rotate(-34deg);transform-origin:left center}
+#scratchCanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.scratchPanel{background:#111823;border:1px solid #34425a;border-radius:18px;padding:20px}
+.mapCard{width:min(760px,90vw);aspect-ratio:1.55;border:10px solid #e6e0d5;background:linear-gradient(#09152a,#070d16);position:relative;margin:18px auto;box-shadow:0 20px 60px #0008}
+.mapCard .dot{position:absolute;width:7px;height:7px;border-radius:50%;background:#f4f7ff;box-shadow:0 0 10px #dceaff88}
+.mapCard .routeLine{position:absolute;left:14%;top:70%;width:64%;height:2px;background:#d8c183aa;transform:rotate(-34deg);transform-origin:left center}
+.mapCard .caption{position:absolute;left:16px;right:16px;bottom:12px;color:#d6deea;font-size:12px;display:flex;justify-content:space-between}
+
+/* hard junior observation */
+.focusGame{width:min(1100px,95vw);display:grid;grid-template-columns:1.3fr .7fr;gap:20px;align-items:center}
+.focusField{position:relative;height:500px;background:radial-gradient(circle at center,#0a1324,#050815 70%);border:1px solid #34445b;border-radius:16px;overflow:hidden;touch-action:none;cursor:crosshair}
+.focusTarget{position:absolute;width:58px;height:26px;border-radius:50%;background:#e4d7ae;box-shadow:0 0 18px #e4d7ae66;transform:translate(-50%,-50%)}
+.focusTarget:after{content:"";position:absolute;width:86px;height:12px;border:3px solid #c8b98f;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-12deg)}
+.reticle{position:absolute;width:86px;height:86px;border:2px solid #abc6ef;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 22px rgba(171,198,239,.18)}
+.focusPanel{background:#111823;border:1px solid #34425a;border-radius:18px;padding:20px}
+.meter{height:10px;background:#222d3b;border-radius:999px;overflow:hidden;margin:12px 0}.meter i{display:block;height:100%;background:#a9c7ef;width:0%}
+.trackButtons{display:grid;grid-template-columns:repeat(3,54px);gap:7px;justify-content:center;margin:14px 0}.trackButtons button{height:44px;border:1px solid #50627d;background:#1a2636;color:white;border-radius:9px}
+.focusSlider{width:100%}
+
+/* final wall */
+.finalWall{width:min(1040px,94vw);max-height:90vh;overflow:auto;background:#171d26;border:1px solid #344157;border-radius:18px;padding:24px;box-shadow:0 30px 100px #000a}
+.photoGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:18px}
+.polaroid{background:#e8e2d7;color:#232323;padding:10px 10px 32px;transform:rotate(var(--r));box-shadow:0 9px 24px #0006}
+.polaroid .img{height:150px;background:var(--bgimg);position:relative;overflow:hidden}
+.polaroid .cap{margin-top:9px;font-size:12px;line-height:1.5;font-family:"Microsoft YaHei",sans-serif}
+
+@media(max-width:850px){
+  .grid,.portfolioBoard,.scratchGame,.focusGame{grid-template-columns:1fr}
+  canvas.gameCanvas{height:470px}
+  .photoGrid{grid-template-columns:1fr 1fr}
+}
+
+/* persistent push notifications */
+.pushStack{position:absolute;z-index:74;right:24px;top:24px;width:min(360px,32vw);display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.pushToast{
+  pointer-events:auto;padding:13px 14px;border-radius:15px;background:#111924f2;border:1px solid #42536d;
+  box-shadow:0 16px 38px rgba(0,0,0,.42);animation:pushIn .3s ease both;color:#eaf0f7
+}
+.pushToast small{display:block;color:#8fa0b5;margin-bottom:5px}.pushToast b{display:block;line-height:1.45}
+@keyframes pushIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+
+/* low-cost Florence-like visual story beats */
+.momentCard{
+  width:min(980px,92vw);padding:24px;border:1px solid #516078;border-radius:20px;
+  background:linear-gradient(145deg,rgba(25,33,46,.96),rgba(14,20,29,.96));box-shadow:0 28px 80px #0007
+}
+.momentHead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:18px}
+.momentHead h2{margin:4px 0 0;font-size:30px}.momentHead .time{font-size:12px;color:#91a1b6}
+.beatStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.beat{
+  min-height:190px;border:1px solid #3b4b62;border-radius:16px;background:#111823;overflow:hidden;
+  display:flex;flex-direction:column
+}
+.beatVisual{height:105px;position:relative;background:#162131}
+.beatText{padding:13px 14px;color:#cbd6e4;line-height:1.65;font-size:14px}
+.v-calendar:before{content:"09";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:52px;font-weight:800;color:#dce7f5}
+.v-calendar:after{content:"月";position:absolute;left:57%;top:58%;font-size:13px;color:#8294ab}
+.v-code:before{content:"{  }";position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);font:700 48px monospace;color:#b9cdf0}
+.v-code:after{content:"run ✓";position:absolute;left:50%;top:72%;transform:translateX(-50%);font:12px monospace;color:#8fc7a1}
+.v-exam:before{content:"上机考核";position:absolute;left:50%;top:43%;transform:translate(-50%,-50%);font-size:22px;font-weight:700}
+.v-exam:after{content:"12 / 26  19:00";position:absolute;left:50%;top:64%;transform:translateX(-50%);font-size:12px;color:#93a2b4}
+.v-save:before{content:"SAVE";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 42px monospace;color:#b7cbed}
+.v-map:before{content:"✦  ·  ✦  ·  ✦";position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) rotate(-10deg);font-size:27px;color:#e3c68f}
+.v-map:after{content:"观星地图";position:absolute;left:50%;top:70%;transform:translateX(-50%);font-size:13px;color:#99a9bc}
+.v-semester:before{content:"大三";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:46px;font-weight:800;color:#dce7f5}
+
+.decisionCard{
+  width:min(980px,92vw);padding:22px;border:1px solid #516078;border-radius:20px;
+  background:linear-gradient(145deg,rgba(24,32,44,.96),rgba(13,19,28,.96));box-shadow:0 28px 80px #0007
+}
+.decisionClock{text-align:center;font:700 42px/1.1 monospace;color:#e7edf5;margin:4px 0 18px}
+.eventPair{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch}
+.eventCard{padding:18px;border:1px solid #3c4c64;border-radius:16px;background:#111925}
+.eventCard .source{font-size:11px;color:#8ea0b7;letter-spacing:.12em}.eventCard h3{font-size:22px;margin:8px 0}.eventCard p{color:#b9c5d5;line-height:1.65;margin:0}
+.conflictMark{display:grid;place-items:center;color:#73849a;font-size:22px}
+.thoughtLines{margin-top:17px;padding:14px 16px;border-radius:13px;background:#0e151f;border:1px solid #34445b;color:#ced8e5;line-height:1.85}
+.thoughtLines p{margin:4px 0}
+
+.endingPaper{
+  width:min(820px,90vw);max-height:85vh;overflow:auto;padding:28px 34px;border-radius:6px;
+  background:#e5dfd1;color:#242424;box-shadow:0 30px 90px #0008;transform:rotate(-.4deg)
+}
+.endingPaper .chapter{font-size:11px;letter-spacing:.2em;color:#777}.endingPaper p{font-size:17px;line-height:1.9;border-bottom:1px solid #c9c0af;padding:7px 0;margin:0}
+.endingPaper .btn{margin-top:18px}
+
+
+/* ===== v11: unified transition language ===== */
+
+/* Freshman year: tearing calendar */
+.calendarScene{
+  width:min(900px,92vw);display:grid;grid-template-columns:.85fr 1.15fr;gap:34px;align-items:center;
+  padding:28px;border-radius:20px;border:1px solid #4b5c73;background:rgba(15,21,31,.88);
+  box-shadow:0 28px 80px #0008
+}
+.calendarStack{position:relative;min-height:440px;display:grid;place-items:center}
+.calendarPaper{
+  position:relative;width:min(330px,80vw);height:390px;background:#eee9df;color:#202020;
+  border-radius:6px 6px 3px 3px;box-shadow:0 20px 50px #0008;transform:rotate(-1deg);
+  transform-origin:top center;overflow:hidden
+}
+.calendarPaper:before,.calendarPaper:after{
+  content:"";position:absolute;z-index:-1;inset:7px -7px -7px 7px;background:#ddd6ca;border-radius:5px;box-shadow:0 8px 20px #0005
+}
+.calendarPaper:after{inset:14px -14px -14px 14px;background:#cac2b5}
+.calendarTop{height:48px;background:#a95e51;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;letter-spacing:.18em}
+.calendarMonth{font-size:92px;font-weight:800;line-height:1;text-align:center;margin-top:62px}
+.calendarYear{text-align:center;margin-top:14px;color:#777;font-size:14px}
+.calendarPaper.tear{animation:tearPage .38s cubic-bezier(.55,.02,.7,.3) both}
+@keyframes tearPage{
+  0%{transform:rotate(-1deg) translateY(0);opacity:1}
+  55%{transform:rotate(5deg) translate(26px,60px);opacity:.9}
+  100%{transform:rotate(13deg) translate(120px,330px);opacity:0}
+}
+.calendarNotes h2{font-size:31px;margin:6px 0 14px}
+.calendarLine{min-height:88px;font-size:20px;line-height:1.8;color:#d8e1ec}
+.calendarCounter{font-size:12px;color:#8292a6;margin-top:14px}
+
+/* End of freshman year: guide ticks */
+.guideFinish{
+  width:min(760px,90vw);padding:25px;border-radius:24px;border:1px solid #43546d;
+  background:linear-gradient(145deg,#172131,#0e151f);box-shadow:0 28px 90px #0008
+}
+.guideFinish h2{margin:6px 0 4px}
+.finishTask{
+  display:flex;align-items:center;gap:13px;padding:16px 6px;border-bottom:1px solid #29374a;
+  font-size:18px;color:#c7d1dd;transition:.45s ease
+}
+.finishCheck{
+  width:28px;height:28px;border-radius:50%;border:2px solid #60728b;display:grid;place-items:center;
+  color:transparent;font-weight:800;transition:.45s ease
+}
+.finishTask.checked{color:#eaf1f8}
+.finishTask.checked .finishCheck{background:#315844;border-color:#76a98a;color:#dff2e5;transform:scale(1.08)}
+.finishTask.checked .finishCheck:after{content:"✓"}
+.finishFooter{opacity:0;transform:translateY(8px);transition:.5s ease;margin-top:17px;color:#aebbc9;line-height:1.75}
+.finishFooter.show{opacity:1;transform:none}
+
+/* Each new school stage: black-screen typewriter */
+.stageBlack{
+  width:min(860px,86vw);min-height:430px;display:flex;flex-direction:column;justify-content:center;
+  color:#f0f3f7
+}
+.stageLabel{font-size:13px;letter-spacing:.24em;color:#7d8998;margin-bottom:22px}
+.stageTyping{font-size:23px;line-height:1.95;white-space:pre-wrap;min-height:260px}
+.stageCursor{display:inline-block;width:9px;height:1.18em;background:#e3e9f0;vertical-align:-3px;animation:cursor .9s steps(1) infinite}
+.stageContinue{opacity:0;pointer-events:none;transition:.35s ease;margin-top:20px}
+.stageContinue.show{opacity:1;pointer-events:auto}
+
+/* Final recap: book */
+.bookStage{
+  width:min(1050px,94vw);perspective:1500px;display:flex;flex-direction:column;align-items:center
+}
+.book{
+  position:relative;width:100%;min-height:540px;display:grid;grid-template-columns:1fr 1fr;
+  filter:drop-shadow(0 28px 42px #0008);transform-style:preserve-3d
+}
+.book:before{
+  content:"";position:absolute;z-index:5;left:50%;top:0;bottom:0;width:18px;transform:translateX(-50%);
+  background:linear-gradient(90deg,#c4b9a4,#eee5d5 48%,#a99f8c);box-shadow:0 0 22px #0003
+}
+.bookPage{
+  position:relative;background:#e7e0d2;color:#252525;padding:34px 38px;overflow:hidden;
+  border:1px solid #bfb5a4;min-height:540px
+}
+.bookPage.left{border-radius:10px 2px 2px 10px;background:linear-gradient(90deg,#d8d0c1,#ebe4d7 14%)}
+.bookPage.right{border-radius:2px 10px 10px 2px;background:linear-gradient(90deg,#ddd4c5,#ebe4d7 12%)}
+.bookPage h2{font-size:27px;margin:10px 0 18px}
+.bookPage p{font-size:16px;line-height:1.95;margin:8px 0;color:#353535}
+.bookPage .pageNo{position:absolute;bottom:18px;font-size:11px;color:#8a8174}
+.bookPage.left .pageNo{left:28px}.bookPage.right .pageNo{right:28px}
+.bookMini{
+  margin:16px 0;padding:16px;border:1px solid #bdb2a0;background:#f1ece3;
+  min-height:145px;position:relative;overflow:hidden
+}
+.bookMini.calendar:before{content:"SEP → JUN";position:absolute;inset:0;display:grid;place-items:center;font:700 31px monospace;color:#6d675e}
+.bookMini.route:before{content:"了解  ─  准备  ─  验证";position:absolute;inset:0;display:grid;place-items:center;font:700 20px sans-serif;color:#4d5969}
+.bookMini.map:before{content:"✦    ·    ✦    ·    ✦";position:absolute;inset:0;display:grid;place-items:center;font-size:34px;color:#8a7447;background:#172237}
+.bookMini.observe:before{content:"◉  跟踪记录  ◉";position:absolute;inset:0;display:grid;place-items:center;font:700 21px monospace;color:#d1bf8f;background:#111c2b}
+.bookMini.material:before{content:"经历  →  材料  →  面谈";position:absolute;inset:0;display:grid;place-items:center;font:700 20px sans-serif;color:#4d5969}
+.book.turn{animation:bookTurn .48s ease}
+@keyframes bookTurn{0%{transform:rotateY(0)}45%{transform:rotateY(-4deg) scale(.985)}100%{transform:rotateY(0)}}
+.bookActions{margin-top:18px;display:flex;gap:10px}
+@media(max-width:800px){
+  .calendarScene{grid-template-columns:1fr}
+  .calendarPaper{height:315px}.calendarMonth{font-size:72px;margin-top:45px}
+  .book{grid-template-columns:1fr}.bookPage.left{display:none}.book:before{display:none}
+}
+
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="intro" class="intro">
+    <div class="introBox">
+      <div id="introText" class="introText"></div><span class="cursor"></span>
+      <div class="introHint">点击可加快文字。</div>
+    </div>
+  </div>
+
+  <div id="world">
+    <section id="dorm" class="room">
+      <div class="backWall"></div><div class="leftWall"></div><div class="rightWall"></div><div class="floor"></div>
+      <div class="window"><i class="star" style="left:19%;top:22%"></i><i class="star" style="left:68%;top:27%"></i><i class="star" style="left:43%;top:71%"></i><i class="star" style="left:83%;top:61%"></i></div>
+      <div class="bed"></div><div class="desk"></div><div id="monitor" class="monitor"></div><div class="monitorStand"></div><div class="monitorBase"></div>
+      <div class="photoWall">
+        <div class="pinPhoto sky"></div><div class="pinPhoto moon"></div><div class="pinPhoto roof"></div>
+      </div>
+      <div id="phoneProp" class="phoneProp"></div><div id="door" class="door"></div>
+      <button id="photoHot" class="hot" data-action="photoWall" disabled><span>照片墙</span></button>
+      <button id="phoneHot" class="hot" data-action="phone" disabled><span>手机</span></button>
+      <button id="pcHot" class="hot" data-action="computer" disabled><span>电脑</span></button>
+      <button id="doorHot" class="hot" data-action="door" disabled><span>出门</span></button>
+      <div id="toast" class="toast"></div>
+    </section>
+  </div>
+  <div id="pushStack" class="pushStack"></div>
+  <div id="overlay" class="overlay hidden"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const overlay=$("#overlay"),dorm=$("#dorm"),toast=$("#toast"),monitor=$("#monitor"),phoneProp=$("#phoneProp"),door=$("#door");
+const photoHot=$("#photoHot"),phoneHot=$("#phoneHot"),pcHot=$("#pcHot"),doorHot=$("#doorHot"),intro=$("#intro"),introText=$("#introText");
+
+const S={
+  stage:"intro",route:null,soph:null,junior:null,guide:[false,false,false,false,false],phoneTab:"guide",
+  keys:{},gameRAF:null,currentPlayer:null,
+  pfPick:null,portfolioSelected:[],
+  obsMode:null,dialogIndex:0,postIndex:0,
+  scratched:0,scratchDragging:false,scratchChecks:0,
+  aimX:50,aimY:50,targetX:68,targetY:35,focusValue:24,focusTarget:52,focusHold:0,focusTimer:null,trackingActive:false,
+  endLines:[],endIndex:0,calendarTimer:null,stageTimer:null,bookPages:[],bookIndex:0
+};
+const R={
+  job:{
+    name:"找工作 / 计算机就业",a2:"就业经验分享会",a3:"校企岗位短期见习计划",
+    guide:["完成专业基础课程","建立英语与基础能力","了解岗位与就业路径","参加岗位见习遴选","进入毕业求职阶段"],
+    aa:"后来他慢慢确认，自己最愿意反复做的，是把一个混乱的问题拆开、试错，再看着系统真的跑起来。于是选岗位时，他开始主动避开自己不想长期做的事，只留下那些确实愿意继续钻的方向。"
+  },
+  grad:{
+    name:"继续升学",a2:"升学经验分享会",a3:"课题组短期见习计划",
+    guide:["完成专业基础课程","建立英语与学业能力","了解升学与研究方向","参加课题组见习遴选","进入毕业升学阶段"],
+    aa:"后来他慢慢确认，自己最愿意花时间的，是把一个问题追得足够深，直到真的能解释清楚。于是继续升学不再只是计划表上的下一格，而变成了他自己愿意留下来的方向。"
+  },
+  civil:{
+    name:"考公 / 公共方向",a2:"公共方向经验分享会",a3:"公共事务短期见习计划",
+    guide:["完成专业基础课程","了解基本报考要求","了解考试与岗位方向","参加公共事务见习遴选","进入毕业报考阶段"],
+    aa:"后来他慢慢确认，自己在意的是把技术、规则和流程整理清楚，让一件具体的事真的能被人顺利办成。那之后，他继续走这条路，也有了比“稳定”更具体的理由。"
+  }
+};
+
+function show(html,mode="full"){
+  stopLoops();
+  overlay.innerHTML=html;
+  overlay.classList.toggle("soft",mode==="soft");
+  overlay.classList.remove("hidden");
+}
+function hide(){
+  stopLoops();
+  overlay.classList.add("hidden");
+  overlay.classList.remove("soft");
+  overlay.innerHTML="";
+}
+function stopLoops(){
+  if(S.gameRAF){cancelAnimationFrame(S.gameRAF);S.gameRAF=null}
+  if(S.focusTimer){clearInterval(S.focusTimer);S.focusTimer=null}
+  if(S.calendarTimer){clearTimeout(S.calendarTimer);S.calendarTimer=null}
+  if(S.stageTimer){clearTimeout(S.stageTimer);S.stageTimer=null}
+  S.trackingActive=false;
+}
+function brief(text){toast.textContent=text;toast.classList.remove("show");void toast.offsetWidth;toast.classList.add("show")}
+function clearPushes(){const s=$("#pushStack");if(s)s.innerHTML=""}
+function pushNews(title,delay=0){
+  setTimeout(()=>{
+    const stack=$("#pushStack");if(!stack)return;
+    const item=document.createElement("button");
+    item.className="pushToast";
+    item.innerHTML=`<small>校园成长资讯 · 刚刚</small><b>${title}</b>`;
+    item.onclick=()=>item.remove();
+    stack.prepend(item);
+    phoneProp.classList.add("active");
+    setTimeout(()=>phoneProp.classList.remove("active"),500);
+    setTimeout(()=>{if(item.isConnected)item.remove()},7000);
+  },delay);
+}
+function anxietyBurst(){
+  clearPushes();
+  pushNews("《大一结束，你真的没有落后吗？》",0);
+  pushNews("《为什么有人大一就已经有三段项目经历？》",850);
+  pushNews("《真正拉开差距的，往往是第一年》",1700);
+  pushNews("《大二前，这些事情最好已经开始准备》",2550);
+}
+
+function enable({photo=false,phone=false,pc=false,doorGo=false}={}){
+  photoHot.disabled=!photo;phoneHot.disabled=!phone;pcHot.disabled=!pc;doorHot.disabled=!doorGo;
+  [photoHot,phoneHot,pcHot,doorHot].forEach(x=>x.classList.remove("available"));
+  if(photo)photoHot.classList.add("available");if(phone)phoneHot.classList.add("available");if(pc)pcHot.classList.add("available");if(doorGo)doorHot.classList.add("available");
+  monitor.classList.toggle("active",pc);phoneProp.classList.toggle("active",phone);door.classList.toggle("active",doorGo);
+}
+function cinema(ch,big,lines,nextAction,nextText="继续"){
+  const beats=lines.slice(0,3);
+  const visuals=["v-calendar","v-code","v-save"];
+  show(`<div class="momentCard fade">
+    <div class="momentHead"><div><div class="kicker">${ch}</div><h2>${big}</h2></div><div class="time">片段</div></div>
+    <div class="beatStrip">${beats.map((x,i)=>`<div class="beat"><div class="beatVisual ${visuals[i%visuals.length]}"></div><div class="beatText">${x}</div></div>`).join("")}</div>
+    ${lines.length>3?`<div class="thoughtLines">${lines.slice(3).map(x=>`<p>${x}</p>`).join("")}</div>`:""}
+    <div class="actions"><button class="btn" data-action="${nextAction}">${nextText}</button></div>
+  </div>`,"soft");
+}
+
+/* opening */
+const opening=`九月。
+我第一次住进大学宿舍。
+
+我是计算机专业。
+选它没有什么传奇理由——分数合适，就业看起来不错，我也并不讨厌。
+有些程序真的跑起来的时候，我甚至会觉得挺爽。
+
+我老家晚上抬头就能看见很多星星。
+小时候最常做的事之一，就是举着手机乱拍。
+星星总拍不清，月亮也总是糊的。
+但我还是一直拍。
+
+现在我把那些照片也带来了。
+
+大学四年。
+总得先给自己找一条路。`;
+let ti=0,fast=false,typeTimer=null;
+function typeNext(){
+  if(ti>=opening.length){$(".introHint").textContent="点击进入宿舍";intro.dataset.done="1";return}
+  introText.textContent+=opening[ti++];typeTimer=setTimeout(typeNext,fast?5:28);
+}
+intro.addEventListener("click",()=>{
+  if(intro.dataset.done==="1"){
+    clearTimeout(typeTimer);intro.classList.add("hidden");S.stage="photoWall";enable({photo:true});brief("墙上贴着从家里带来的几张照片。");
+  }else fast=true;
+});
+typeNext();
+
+function photoWall(){
+  show(`<div class="card center"><div class="kicker">照片墙 · 入学第一天</div>
+    <div class="photoGrid">
+      <div class="polaroid" style="--r:-3deg;--bgimg:linear-gradient(#18294a,#0d1524)"><div class="img"></div><div class="cap">老家楼顶。<br>肉眼看起来比照片亮得多。</div></div>
+      <div class="polaroid" style="--r:3deg;--bgimg:radial-gradient(circle at 60% 40%,#e8dfc0 0 16%,#263753 18%)"><div class="img"></div><div class="cap">月亮。<br>还是糊了。</div></div>
+      <div class="polaroid" style="--r:1deg;--bgimg:linear-gradient(#202b3d 0 64%,#11161c 65%)"><div class="img"></div><div class="cap">家里楼顶。<br>风很大，手机差点掉下去。</div></div>
+    </div>
+    <div class="quote">“也不知道大学这几年，还会拍些什么。”</div>
+    <div class="actions"><button class="btn" data-action="photoWallBack">回到宿舍</button></div>
+  </div>`);
+}
+function routePicker(){
+  show(`<div class="phoneUI"><div class="widget"><div class="kicker">第一次打开</div><h3>《大学满分攻略》</h3>
+    <p>根据毕业目标生成四年行动计划。</p><div class="quote">这不是最终决定。之后的经历，可能会改变你的想法。</div>
+    <button class="choice" data-route="job"><b>找工作 / 计算机就业</b><small>先以进入软件或技术岗位作为主要出口。</small></button>
+    <button class="choice" data-route="grad"><b>继续升学</b><small>先以研究生阶段作为主要出口。</small></button>
+    <button class="choice" data-route="civil"><b>考公 / 公共方向</b><small>先以公共部门相关方向作为主要出口。</small></button>
+  </div></div>`);
+}
+function routePlan(){
+  const r=R[S.route];
+  show(`<div class="card"><div class="kicker">计划已生成</div><h2>${r.name}</h2>
+    <div class="grid"><div class="info"><b>大一</b><p>建立基础<br>课程与考试</p></div><div class="info"><b>大二</b><p>了解方向<br>形成路线</p></div><div class="info"><b>大三</b><p>验证方向<br>进入真实环境</p></div></div>
+    <div class="quote" style="margin-top:18px">看上去挺清楚的。<br>至少现在，不用每天重新想“以后怎么办”。</div>
+    <div class="actions"><button class="btn" data-action="afterRoutePlan">收起手机</button></div>
+  </div>`);
+}
+function phone(tab){
+  if(S.stage==="routePick"){routePicker();return}
+  S.phoneTab=tab||S.phoneTab||"guide";
+  const r=R[S.route];
+  let body="";
+  if(S.phoneTab==="guide"){
+    body=`<div class="widget"><h3>《大学满分攻略》</h3><small>${r.name}</small>${r.guide.map((g,i)=>`<div class="guideItem ${S.guide[i]?"done":""}">${g}</div>`).join("")}</div>`;
+  }else if(S.phoneTab==="info"){
+    let x=`<div class="widget"><h3>资讯</h3>`;
+    if(["anxiety","sophChoice","juniorChoice","ending","final"].includes(S.stage)){
+      x+=`<div class="push"><b>《大一已经结束，你真的没有落后吗？》</b><small>校园成长资讯</small></div>
+      <div class="push"><b>《为什么有人大一就已经拥有三段项目经历？》</b><small>校园成长资讯</small></div>
+      <div class="push"><b>《真正拉开差距的，往往是第一年。》</b><small>校园成长资讯</small></div>`;
+    }else x+=`<p>暂时没有新的资讯。</p>`;
+    body=x+`</div>`;
+  }else{
+    let m=`<div class="widget"><h3>消息</h3>`;
+    if(S.stage==="sophChoice"){
+      m+=`<div class="msg"><b>学院通知</b><small>今天 09:20</small><p>周六 19:00 · ${r.a2}<br>主题：从现在到毕业，这条路通常怎么走。</p></div>
+      <div class="msg"><b>天文社公众号</b><small>今天 12:46</small><p>周六 19:00 · 公开观测<br>预计天气良好，第一次来也没关系。</p></div>
+      <div class="quote">两条消息。<br>同一个周六，19:00。</div>`;
+    }else if(S.stage==="juniorChoice"){
+      m+=`<div class="msg"><b>学院通知</b><small>昨天 18:10</small><p>${r.a3}开始招募。需要提交材料并参加简短面谈，名额有限。</p></div>`;
+      if(S.soph==="B"){
+        m+=`<div class="msg"><b>林澈</b><small>今天 00:14</small><p>还记得上次那张观星地图吗？今年真开始做长期计划了。我们和市天文馆合作，一整个学期。你真想来的话，先把时间看清楚。</p></div>`;
+      }else{
+        m+=`<div class="msg"><b>天文社公众号</b><small>今天 08:30</small><p>天文社 × 市天文馆长期联合观测计划招募。持续一学期，固定观测与记录。</p></div>`;
+      }
+      m+=`<div class="quote">这一次，不只是一个晚上。</div>`;
+    }else{
+      m+=`<div class="msg"><b>学院通知</b><small>置顶</small><p>课程、活动与重要节点会从这里发送。</p></div>`;
+      if(S.soph==="B"||S.junior==="B")m+=`<div class="msg"><b>林澈 / 天文社</b><small>已添加</small><p>公开观测与后续安排。</p></div>`;
+    }
+    body=m+`</div>`;
+  }
+  show(`<div class="phoneUI"><div class="phoneTabs">
+    <button data-tab="guide" class="${S.phoneTab==="guide"?"active":""}">攻略</button>
+    <button data-tab="msg" class="${S.phoneTab==="msg"?"active":""}">消息</button>
+    <button data-tab="info" class="${S.phoneTab==="info"?"active":""}">资讯</button>
+  </div>${body}<div class="actions"><button class="btn" data-action="closePhone">锁屏</button></div></div>`);
+}
+
+/* narrative bridges */
+function freshmanBridge(){
+  const pages=[
+    ["九月","课表很快把一周切成一格一格。"],
+    ["十月","第一次把一个小程序从报错改到真的跑起来。"],
+    ["十一月","早八开始不再需要闹钟响三遍。"],
+    ["十二月","作业开始变多，课程群里出现了“期末”两个字。"],
+    ["三月","新学期。很多东西已经不需要别人提醒怎么做。"],
+    ["四月","有些课还是听不懂，有些题却开始能自己拆开。"],
+    ["五月","电脑桌面越来越乱，写过的东西也越来越多。"],
+    ["六月","课程群发来最后一条通知：期末上机考核。"]
+  ];
+  show(`<div class="calendarScene fade">
+    <div class="calendarStack">
+      <div id="calendarPaper" class="calendarPaper">
+        <div class="calendarTop">大学第一年</div>
+        <div id="calendarMonth" class="calendarMonth">${pages[0][0]}</div>
+        <div class="calendarYear">第一学年</div>
+      </div>
+    </div>
+    <div class="calendarNotes">
+      <div class="kicker">大一</div>
+      <h2>日子一页一页过去。</h2>
+      <div id="calendarLine" class="calendarLine">${pages[0][1]}</div>
+      <div id="calendarCounter" class="calendarCounter">1 / ${pages.length}</div>
+      <div id="calendarDone" class="actions hidden"><button class="btn" data-action="armExam">去上机考核</button></div>
+    </div>
+  </div>`,"soft");
+
+  let i=0;
+  const advance=()=>{
+    if(i>=pages.length-1){
+      $("#calendarCounter").textContent="六月 · 大一学年末";
+      $("#calendarDone").classList.remove("hidden");
+      return;
+    }
+    const paper=$("#calendarPaper");
+    paper.classList.add("tear");
+    S.calendarTimer=setTimeout(()=>{
+      i++;
+      paper.classList.remove("tear");
+      void paper.offsetWidth;
+      $("#calendarMonth").textContent=pages[i][0];
+      $("#calendarLine").textContent=pages[i][1];
+      $("#calendarCounter").textContent=`${i+1} / ${pages.length}`;
+      S.calendarTimer=setTimeout(advance,650);
+    },360);
+  };
+  S.calendarTimer=setTimeout(advance,850);
+}
+
+function freshmanGuideFinish(){
+  show(`<div class="guideFinish fade">
+    <div class="kicker">《满分攻略》 · 大一</div>
+    <h2>第一阶段</h2>
+    <div id="finishTask0" class="finishTask"><span class="finishCheck"></span><span>完成专业基础课程</span></div>
+    <div id="finishTask1" class="finishTask"><span class="finishCheck"></span><span>${S.route==="grad"?"建立英语与学业能力":S.route==="civil"?"了解基本报考要求":"建立英语与基础能力"}</span></div>
+    <div id="finishFooter" class="finishFooter">
+      大一结束。<br>
+      计划第一次完整划掉了一段。下一栏写着：<b>大二 · 了解方向</b>。
+    </div>
+    <div id="finishGuideAction" class="actions hidden"><button class="btn" data-action="afterFreshmanGuide">收起手机</button></div>
+  </div>`,"soft");
+
+  S.stageTimer=setTimeout(()=>{
+    $("#finishTask0").classList.add("checked");
+    S.stageTimer=setTimeout(()=>{
+      $("#finishTask1").classList.add("checked");
+      S.stageTimer=setTimeout(()=>{
+        $("#finishFooter").classList.add("show");
+        $("#finishGuideAction").classList.remove("hidden");
+      },650);
+    },650);
+  },550);
+}
+
+
+function stageTypewriter(label,content,nextAction,nextText="继续"){
+  show(`<div class="stageBlack fade">
+    <div class="stageLabel">${label}</div>
+    <div><span id="stageTyping" class="stageTyping"></span><span id="stageCursor" class="stageCursor"></span></div>
+    <div id="stageContinue" class="stageContinue"><button class="btn alt" data-action="${nextAction}">${nextText}</button></div>
+  </div>`);
+  let i=0;
+  const out=$("#stageTyping");
+  const tick=()=>{
+    if(i>=content.length){
+      $("#stageCursor").classList.add("hidden");
+      $("#stageContinue").classList.add("show");
+      return;
+    }
+    out.textContent+=content[i++];
+    S.stageTimer=setTimeout(tick,content[i-1]==="\n"?85:22);
+  };
+  S.stageTimer=setTimeout(tick,300);
+}
+function sophomoreOpening(){
+  stageTypewriter("第二年",`大二。
+
+课表换了一张，宿舍还是同一个宿舍。
+
+班群里开始更常出现“实习”“比赛”“升学”“报名”这些词。
+我也还在照着那张计划往前走。
+
+某个周六前，手机里先后多了两条新消息。`,"enterSoph","进入大二");
+}
+function juniorOpening(){
+  const body=S.soph==="B"
+    ?`大三。
+
+去年做的那张观星地图还留在相册里。
+大多数日子，还是课程、作业和原来的计划。
+
+只是有些事情第二次出现时，就不再只是“去看看”。`
+    :`大三。
+
+去年那场活动之后，我把自己的路线整理得更清楚了。
+很多事情开始有具体时间，具体步骤。
+
+时间表一旦变具体，冲突也会变具体。`;
+  stageTypewriter("第三年",body,"enterJunior","进入大三");
+}
+
+function sophStruggle(){
+  show(`<div class="decisionCard fade">
+    <div class="kicker">大二 · 周六</div>
+    <div class="decisionClock">18:21 → 19:00</div>
+    <div class="eventPair">
+      <div class="eventCard"><div class="source">学院通知</div><h3>${R[S.route].a2}</h3><p>19:00 开始。是我本来就想去听的一场活动。</p></div>
+      <div class="conflictMark">×</div>
+      <div class="eventCard"><div class="source">天文社</div><h3>公开观测</h3><p>也是 19:00。集合地点在校外，今天已经来回看了几次通知。</p></div>
+    </div>
+    <div class="thoughtLines">
+      <p>两个地方离得不近，结束时间也重叠。</p>
+      <p>今晚没有“先去一个，再赶另一个”。</p>
+      <p>会议链接停在电脑上，集合地点还亮在手机里。19:00 之前，我只能选一个。</p>
+    </div>
+    <div class="actions"><button class="btn" data-action="armSophChoice">回到宿舍</button></div>
+  </div>`,"soft");
+}
+function juniorStruggle(){
+  const bText=S.soph==="B"
+    ?"林澈发来的联合观测确认停在最后一步。去年那张地图还在相册里。"
+    :"天文社的长期计划今晚也要确认名单。我没参加过上次公开观测，却还是看了几遍招募说明。";
+  show(`<div class="decisionCard fade">
+    <div class="kicker">大三 · 确认截止前</div>
+    <div class="decisionClock">23:12</div>
+    <div class="eventPair">
+      <div class="eventCard"><div class="source">学院通知</div><h3>${R[S.route].a3}</h3><p>今晚截止确认。从下个月起会固定占用几段时间。</p></div>
+      <div class="conflictMark">×</div>
+      <div class="eventCard"><div class="source">${S.soph==="B"?"林澈":"天文社"}</div><h3>长期联合观测</h3><p>${bText}</p></div>
+    </div>
+    <div class="thoughtLines">
+      <p>两边从下个月开始，会固定撞在同一段时间。</p>
+      <p>这次不是少参加一场活动。接下来的几个月，那几个晚上只能留给其中一边。</p>
+      <p>两个页面都停在“确认”前。总得先关掉一个。</p>
+    </div>
+    <div class="actions"><button class="btn" data-action="armJuniorChoice">回到宿舍</button></div>
+  </div>`,"soft");
+}
+
+/* platformer */
+function startPlatformer(kind){
+  show(`<div class="pc"><div class="pcHeader"><span>${kind==="exam"?"课程上机考核":"路线模拟器"}</span><span>← → / A D 移动　Space / W 跳跃</span></div>
+    <div class="pcBody"><canvas id="miniCanvas" class="gameCanvas" width="1000" height="520"></canvas>
+    <div id="miniInfo" class="feedback">${kind==="exam"?"收集 4 个“基础”节点，再走到右侧提交点。":"依次经过“了解 / 准备 / 验证”，再走到终点。"} </div></div></div>`);
+  const c=$("#miniCanvas"),ctx=c.getContext("2d");
+  const p={x:45,y:430,w:28,h:38,vx:0,vy:0,onGround:false};
+  const platforms=kind==="exam"
+    ?[{x:0,y:476,w:1000,h:44},{x:110,y:390,w:160,h:18},{x:320,y:315,w:165,h:18},{x:535,y:238,w:160,h:18},{x:740,y:355,w:150,h:18}]
+    :[{x:0,y:476,w:1000,h:44},{x:135,y:382,w:175,h:18},{x:365,y:300,w:175,h:18},{x:590,y:382,w:175,h:18},{x:800,y:250,w:145,h:18}];
+  const tokens=kind==="exam"
+    ?[{x:170,y:350,t:"基"},{x:380,y:275,t:"础"},{x:590,y:198,t:"练"},{x:785,y:315,t:"习"}]
+    :[{x:195,y:340,t:"了解"},{x:430,y:258,t:"准备"},{x:650,y:340,t:"验证"}];
+  const got=new Set(),goal={x:930,y:420,w:48,h:56};
+  function collide(a,b){return a.x+a.w>b.x&&a.x<b.x+b.w&&a.y+a.h>b.y&&a.y<b.y+b.h}
+  function reset(){p.x=45;p.y=430;p.vx=0;p.vy=0}
+  function loop(){
+    const prevBottom=p.y+p.h;
+    p.vx=0;if(S.keys["arrowleft"]||S.keys["a"])p.vx=-5;if(S.keys["arrowright"]||S.keys["d"])p.vx=5;
+    p.x+=p.vx;p.vy+=0.6;p.y+=p.vy;p.onGround=false;
+    platforms.forEach(pl=>{
+      if(p.vy>=0&&p.x+p.w>pl.x&&p.x<pl.x+pl.w&&prevBottom<=pl.y+2&&p.y+p.h>=pl.y){
+        p.y=pl.y-p.h;p.vy=0;p.onGround=true;
+      }
+    });
+    if(p.y>560)reset();
+    p.x=Math.max(0,Math.min(1000-p.w,p.x));
+    tokens.forEach((t,i)=>{if(!got.has(i)&&collide(p,{x:t.x-14,y:t.y-14,w:30,h:30}))got.add(i)});
+    ctx.clearRect(0,0,1000,520);
+    const g=ctx.createLinearGradient(0,0,0,520);g.addColorStop(0,"#101c2d");g.addColorStop(1,"#081019");ctx.fillStyle=g;ctx.fillRect(0,0,1000,520);
+    ctx.fillStyle="#31425a";platforms.forEach(pl=>ctx.fillRect(pl.x,pl.y,pl.w,pl.h));
+    tokens.forEach((t,i)=>{
+      if(got.has(i))return;
+      ctx.beginPath();ctx.fillStyle="#e5c88f";ctx.arc(t.x,t.y,15,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#463b25";ctx.font=kind==="exam"?"bold 14px sans-serif":"12px sans-serif";ctx.textAlign="center";ctx.fillText(t.t,t.x,t.y+5);
+    });
+    ctx.fillStyle="#294537";ctx.fillRect(goal.x,goal.y,goal.w,goal.h);ctx.fillStyle="#d8eee0";ctx.font="11px sans-serif";ctx.textAlign="center";ctx.fillText(kind==="exam"?"提交":"终点",goal.x+goal.w/2,goal.y+31);
+    ctx.fillStyle="#e6edf6";ctx.fillRect(p.x,p.y,p.w,p.h);ctx.fillStyle="#71849e";ctx.fillRect(p.x+7,p.y+8,14,4);
+    ctx.fillStyle="#d6e0ec";ctx.font="13px sans-serif";ctx.textAlign="left";ctx.fillText(`${got.size}/${tokens.length}`,18,25);
+    if(got.size===tokens.length&&collide(p,goal)){
+      stopLoops();
+      $("#miniInfo").innerHTML=kind==="exam"
+        ?`<b>考核完成。</b> 你第一次觉得，原来“把东西做出来”和“考试”不是完全两回事。 <button class="btn" data-action="finishExam">离开电脑</button>`
+        :`<b>路线被跑通了。</b> 了解 → 准备 → 验证。 <button class="btn" data-action="finishSophA">保存路线</button>`;
+      return;
+    }
+    S.gameRAF=requestAnimationFrame(loop);
+  }
+  S.currentPlayer=p;S.gameRAF=requestAnimationFrame(loop);
+}
+
+/* junior A */
+function juniorAGame(){
+  const base=["大一课程闯关",S.soph==="A"?"大二路线模拟":"大二公开观测与观星地图","课程项目 / 作业","一次失败后重新修改","对真实岗位仍有疑问"];
+  S.portfolioSelected=[];S.pfPick=null;
+  show(`<div class="pc"><div class="pcHeader"><span>${R[S.route].a3} · 报名材料</span><span>只提交最能说明你的 3 项</span></div><div class="pcBody">
+    <h2>材料不能什么都写。</h2><p>从过去的经历里选 3 项，组成这次见习遴选的材料。</p>
+    <div class="portfolioBoard">
+      <div class="evidencePool"><div class="kicker">经历</div>${base.map((x,i)=>`<button class="evidence" data-evidence="${i}">${x}</button>`).join("")}</div>
+      <div class="portfolio"><div class="kicker">提交材料</div>
+        <button class="portfolioSlot" data-pfslot="0">相关经历</button><button class="portfolioSlot" data-pfslot="1">我真正想确认的问题</button><button class="portfolioSlot" data-pfslot="2">能证明我会把事情做完的经历</button>
+        <div id="pfFeedback" class="feedback">点击左边经历，再点右边一个位置。</div>
+      </div>
+    </div>
+    <div class="actions"><button class="btn alt" data-action="resetPF">清空</button><button class="btn" data-action="submitPF">提交材料</button></div>
+  </div></div>`);
+}
+function renderPF(){
+  const base=["大一课程闯关",S.soph==="A"?"大二路线模拟":"大二公开观测与观星地图","课程项目 / 作业","一次失败后重新修改","对真实岗位仍有疑问"];
+  document.querySelectorAll("[data-evidence]").forEach(b=>{b.classList.toggle("sel",S.pfPick===+b.dataset.evidence);b.disabled=S.portfolioSelected.includes(+b.dataset.evidence)});
+  document.querySelectorAll("[data-pfslot]").forEach((b,i)=>{
+    const idx=S.portfolioSelected[i],titles=["相关经历","我真正想确认的问题","能证明我会把事情做完的经历"];
+    b.classList.toggle("filled",idx!==undefined);b.textContent=idx!==undefined?base[idx]:titles[i];
+  });
+}
+
+/* observatory */
+function enterObservatory(mode){
+  S.obsMode=mode;S.dialogIndex=0;hide();dorm.classList.add("hidden");
+  const old=$("#obs");if(old)old.remove();
+  const obs=document.createElement("section");obs.id="obs";obs.className="observatory fade";
+  const stars=Array.from({length:26},(_,i)=>`<i style="left:${(i*37)%96}%;top:${8+((i*53)%70)}%"></i>`).join("");
+  obs.innerHTML=`<div class="sky">${stars}</div><div class="horizon"></div><div class="obsGround"></div><div class="platform3d"></div>
+    <div class="sign">${mode==="soph"?"天文社公开观测":"XX大学天文社 × 市天文馆 · 联合观测"}</div>
+    <div class="obsTable"></div><div class="telescope"></div><div class="npc"></div>
+    <button id="npcHot" class="obsHot available" data-action="talkNpc"><span>林澈 · 天文社</span></button>
+    <button id="scopeHot" class="obsHot" data-action="useScope" disabled><span>${mode==="soph"?"星空记录":"跟踪观测"}</span></button>
+    <div id="dialog" class="dialog hidden"></div>`;
+  $("#world").appendChild(obs);
+}
+function dialogLines(){
+  if(S.obsMode==="soph")return [["林澈","第一次来？"],["主角","嗯。"],["林澈","那今晚别急着学一堆参数。先把你真正看到的天空留下来。"],["林澈","有一层薄云，手机里看不清。你慢慢把它“擦”出来，最后我们给这张照片标个观测点。"]];
+  if(S.soph==="B")return [["林澈","你来了。"],["主角","嗯。"],["林澈","这次不是拍一张就结束。市天文馆那边要连续记录。"],["林澈","目标会漂，焦点也会受温度影响。你得一直盯着。"]];
+  return [["林澈","你之前没参加过我们活动？"],["主角","没有。"],["林澈","没事，今天先培训一次。"],["林澈","长期观测不是“看见”就完了。你要让目标一直留在视野里，还要保持清晰。"]];
+}
+function showDialog(){
+  const [name,line]=dialogLines()[S.dialogIndex],box=$("#dialog");
+  box.classList.remove("hidden");box.innerHTML=`<div class="name">${name}</div><div class="line">${line}</div><div class="next">点击继续</div>`;box.dataset.action="nextDialog";
+}
+function postDialog(){
+  const lines=S.obsMode==="soph"?
+    [["林澈","这张不错。"],["主角","比我以前拍的清楚多了。"],["林澈","别只存照片，观测点也记下来。以后换季、换方向都能用。"],["主角","那我做成一张地图。"],["林澈","行。下次有人第一次来，直接把这张发给他。"]]:
+    [["林澈","可以。你刚才后半段已经没怎么抖了。"],["主角","但焦点一直在跑。"],["林澈","所以长期记录烦啊。不是做一次，是每周都把这些小偏差重新拉回来。"],["主角","……我好像有点懂了。"]];
+  S.postLines=lines;S.postIndex=0;
+  const box=$("#dialog");box.classList.remove("hidden");box.innerHTML=`<div class="name">${lines[0][0]}</div><div class="line">${lines[0][1]}</div><div class="next">点击继续</div>`;box.dataset.action="nextPost";
+}
+
+/* scratch-off game */
+function scratchGame(){
+  S.scratched=0;S.scratchDragging=false;S.scratchChecks=0;
+  show(`<div class="scratchGame">
+    <div class="scratchWrap"><div class="scratchBase"></div><canvas id="scratchCanvas" width="900" height="545"></canvas></div>
+    <div class="scratchPanel"><div class="kicker">公开观测 · 星空刮刮乐</div><h2>把薄云擦开。</h2>
+      <p>按住鼠标拖动。慢慢把今晚真正露出来的星空“刮”出来。</p>
+      <div id="scratchProgress" class="feedback">已显露约 0%</div>
+      <div class="actions"><button id="photoBtn" class="btn" data-action="takeSkyPhoto" disabled>拍下今晚</button></div>
+    </div>
+  </div>`);
+  const c=$("#scratchCanvas"),ctx=c.getContext("2d");
+  ctx.fillStyle="#293342";ctx.fillRect(0,0,c.width,c.height);
+  for(let i=0;i<70;i++){
+    ctx.beginPath();ctx.fillStyle=`rgba(160,175,195,${0.05+((i%7)/100)})`;
+    ctx.arc((i*137)%c.width,(i*79)%c.height,35+(i%5)*12,0,Math.PI*2);ctx.fill();
+  }
+  function pos(e){
+    const r=c.getBoundingClientRect();
+    return {x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};
+  }
+  function scratch(e){
+    if(!S.scratchDragging)return;
+    const p=pos(e);ctx.save();ctx.globalCompositeOperation="destination-out";ctx.beginPath();ctx.arc(p.x,p.y,42,0,Math.PI*2);ctx.fill();ctx.restore();
+    S.scratchChecks++;
+    if(S.scratchChecks%7===0){
+      const data=ctx.getImageData(0,0,c.width,c.height).data;let clear=0,total=0;
+      for(let y=0;y<c.height;y+=20)for(let x=0;x<c.width;x+=20){total++;if(data[(y*c.width+x)*4+3]<80)clear++}
+      S.scratched=clear/total;
+      $("#scratchProgress").textContent=`已显露约 ${Math.round(S.scratched*100)}%`;
+      if(S.scratched>=0.34){$("#photoBtn").disabled=false;$("#scratchProgress").textContent="够了。你已经能看清这片天空的结构。";}
+    }
+  }
+  c.addEventListener("pointerdown",e=>{S.scratchDragging=true;c.setPointerCapture(e.pointerId);scratch(e)});
+  c.addEventListener("pointermove",scratch);
+  c.addEventListener("pointerup",()=>S.scratchDragging=false);
+  c.addEventListener("pointercancel",()=>S.scratchDragging=false);
+}
+function generatedSkyMap(){
+  show(`<div class="card center"><div class="kicker">拍摄完成 · 自动整理</div><h2>观星地图</h2>
+    <div class="mapCard">
+      <div class="routeLine"></div>
+      <i class="dot" style="left:15%;top:70%"></i><i class="dot" style="left:27%;top:54%"></i><i class="dot" style="left:39%;top:45%"></i><i class="dot" style="left:52%;top:37%"></i><i class="dot" style="left:65%;top:29%"></i><i class="dot" style="left:78%;top:21%;background:#e6c47f"></i>
+      <div class="caption"><span>校外观测点 · 20:43</span><span>天气：薄云后转晴</span></div>
+    </div>
+    <div class="quote">一张照片，变成了一张以后还能继续用的地图。</div>
+    <div class="actions"><button class="btn" data-action="returnFromMap">保存到照片墙</button></div>
+  </div>`);
+}
+
+/* junior hard moving + focus */
+function hardFocusGame(){
+  S.aimX=50;S.aimY=50;S.targetX=68;S.targetY=35;S.focusValue=24;S.focusTarget=52;S.focusHold=0;
+  show(`<div class="focusGame">
+    <div class="focusField"><div id="focusTarget" class="focusTarget"></div><div id="reticle" class="reticle"></div></div>
+    <div class="focusPanel"><div class="kicker">长期联合观测 · 跟踪 + 对焦</div><h2>让目标一直清楚。</h2>
+      <p>按住左侧画面拖动圆环，或用方向键 / WASD / 按钮修正位置；同时拖动调焦。</p>
+      <div class="trackButtons"><span></span><button data-aim="up">↑</button><span></span><button data-aim="left">←</button><button disabled>＋</button><button data-aim="right">→</button><span></span><button data-aim="down">↓</button><span></span></div>
+      <label>调焦 <input id="focusSlider" class="focusSlider" type="range" min="0" max="100" value="${S.focusValue}"></label>
+      <div class="meter"><i id="holdMeter"></i></div>
+      <div id="focusState" class="feedback">先把目标套进圆环，再把画面调清楚。</div>
+    </div>
+  </div>`);
+  const field=document.querySelector(".focusField");
+  let dragging=false;
+  function aimFromPointer(e){
+    const r=field.getBoundingClientRect();
+    S.aimX=Math.max(6,Math.min(94,(e.clientX-r.left)/r.width*100));
+    S.aimY=Math.max(8,Math.min(92,(e.clientY-r.top)/r.height*100));
+  }
+  field.addEventListener("pointerdown",e=>{
+    dragging=true;
+    if(field.setPointerCapture) field.setPointerCapture(e.pointerId);
+    aimFromPointer(e);
+  });
+  field.addEventListener("pointermove",e=>{if(dragging)aimFromPointer(e)});
+  field.addEventListener("pointerup",()=>dragging=false);
+  field.addEventListener("pointercancel",()=>dragging=false);
+
+  S.trackingActive=true;
+  const start=Date.now();
+  S.focusTimer=setInterval(()=>{
+    if(!S.trackingActive)return;
+    const t=(Date.now()-start)/1000;
+    if(S.keys["arrowleft"]||S.keys["a"])S.aimX-=1.3;
+    if(S.keys["arrowright"]||S.keys["d"])S.aimX+=1.3;
+    if(S.keys["arrowup"]||S.keys["w"])S.aimY-=1.3;
+    if(S.keys["arrowdown"]||S.keys["s"])S.aimY+=1.3;
+    S.aimX=Math.max(6,Math.min(94,S.aimX));S.aimY=Math.max(8,Math.min(92,S.aimY));
+    S.targetX=56+13*Math.sin(t*.28)+3*Math.sin(t*.62);
+    S.targetY=48+10*Math.cos(t*.22)+3*Math.sin(t*.47);
+    S.focusTarget=52+5*Math.sin(t*.18)+2*Math.cos(t*.37);
+    const target=$("#focusTarget"),ret=$("#reticle");if(!target||!ret)return;
+    target.style.left=S.targetX+"%";target.style.top=S.targetY+"%";
+    ret.style.left=S.aimX+"%";ret.style.top=S.aimY+"%";
+    const dist=Math.hypot(S.targetX-S.aimX,S.targetY-S.aimY);
+    const fd=Math.abs(S.focusValue-S.focusTarget);
+    target.style.filter=`blur(${Math.min(7,fd/2.2)}px)`;
+    const good=dist<9&&fd<7;
+    if(good)S.focusHold+=0.1;else S.focusHold=Math.max(0,S.focusHold-0.07);
+    $("#holdMeter").style.width=Math.min(100,S.focusHold/5*100)+"%";
+    let text="";
+    if(dist>=9)text="目标正在慢慢漂出圆环。把它拉回中央。";
+    else if(fd>=7)text=S.focusValue<S.focusTarget?"位置对了，焦点还可以再往远处一点。":"位置对了，焦点需要往近处一点。";
+    else text=`稳定记录中：${S.focusHold.toFixed(1)} / 5 秒`;
+    $("#focusState").textContent=text;
+    if(S.focusHold>=5){
+      clearInterval(S.focusTimer);S.focusTimer=null;S.trackingActive=false;
+      show(`<div class="momentCard fade">
+        <div class="momentHead"><div><div class="kicker">联合观测</div><h2>这一段记录完成了。</h2></div><div class="time">本周</div></div>
+        <div class="beatStrip">
+          <div class="beat"><div class="beatVisual v-map"></div><div class="beatText">目标没有消失，只是在视野里慢慢漂。</div></div>
+          <div class="beat"><div class="beatVisual v-code"></div><div class="beatText">位置、焦点、记录时间，哪一个松掉都会留下误差。</div></div>
+          <div class="beat"><div class="beatVisual v-calendar"></div><div class="beatText">下周，同一个时间还要再来一次。</div></div>
+        </div>
+        <div class="actions"><button class="btn" data-action="afterHardFocus">离开设备</button></div>
+      </div>`,"soft");
+    }
+  },100);
+}
+
+/* endings + final wall */
+function afterSoph(){
+  hide();
+  juniorOpening();
+}
+function restoreDorm(){const obs=$("#obs");if(obs)obs.remove();dorm.classList.remove("hidden");hide()}
+function ending(){
+  const code=S.soph+S.junior,r=R[S.route];
+  const branchEnding={
+    AA:[
+      "大三以后，我继续沿着原来的路线走。",
+      r.aa,
+      "到毕业前，我已经能说清楚：哪些事情只是“应该做”，哪些事情是我愿意继续做。"
+    ],
+    BA:[
+      "大二，我去过一次观测点，也留下了一张地图。",
+      "大三，我还是把那段时间留给了原来的路线。",
+      "后来我也在那条路里慢慢找到自己真正愿意投入的部分。那张地图没有消失，只是留在了另一页。"
+    ],
+    AB:[
+      "大二，我先把原来的路线走得更清楚。",
+      "大三，我把一整个学期交给了联合观测，也第一次把计算机里学过的东西用到观测记录上。",
+      "毕业前，我搜索过的词变得更杂了：软件、数据、科研工具、观测系统。没有哪一个自动变成答案。"
+    ],
+    BB:[
+      "大二，我留下了第一张观星地图。",
+      "大三再回去时，更多的是偏焦、漂移、云层和重复记录。",
+      "学期结束那天，设备收完了。我问林澈：下个月那个观测，还缺人吗？"
+    ]
+  }[code];
+
+  const p2=S.soph==="B"
+    ?{title:"大二",mini:"map",text:["第一次公开观测。","一张刮出来的星空照片，最后变成了观星地图。"]}
+    :{title:"大二",mini:"route",text:["路线开始变得具体。","了解、准备、验证，一件一件都有了时间。"]};
+  const p3=S.junior==="B"
+    ?{title:"大三",mini:"observe",text:["联合观测持续了一整个学期。","第一次的新鲜感过去以后，剩下的是一次次把偏差拉回来。"]}
+    :{title:"大三",mini:"material",text:["见习遴选前，我第一次认真整理过去做过的事。","那些经历不再只是散在不同学期里的记录。"]};
+
+  S.bookPages=[
+    {title:"四年以前",mini:"calendar",text:["刚入学时，我先替自己选了一条看起来能走通的路。","那时我很想知道，什么样的大学才算没有走错。"]},
+    {title:"大一",mini:"calendar",text:["课表、作业、第一次上机考核。","《满分攻略》里，大一的两项任务被勾掉。"]},
+    p2,p3,
+    {title:"毕业前",mini:S.junior==="B"?"observe":"route",text:branchEnding},
+    {title:"最后一页",mini:"calendar",text:["墙上的照片已经比刚入学时多了很多。","它们没有替我证明哪条路更正确，只是把我真的花过时间的地方留了下来。"]}
+  ];
+  S.bookIndex=0;
+  S.stage="ending";
+  renderBook();
+}
+function bookMiniClass(mini){return mini||"calendar"}
+function pageHTML(page,no,side){
+  if(!page)return `<div class="bookPage ${side}"></div>`;
+  return `<div class="bookPage ${side}">
+    <div class="kicker">${page.title}</div>
+    <div class="bookMini ${bookMiniClass(page.mini)}"></div>
+    ${page.text.map(x=>`<p>${x}</p>`).join("")}
+    <div class="pageNo">${no}</div>
+  </div>`;
+}
+function renderBook(){
+  const left=S.bookPages[S.bookIndex],right=S.bookPages[S.bookIndex+1];
+  const done=S.bookIndex+2>=S.bookPages.length;
+  show(`<div class="bookStage fade">
+    <div id="book" class="book">
+      ${pageHTML(left,S.bookIndex+1,"left")}
+      ${pageHTML(right,S.bookIndex+2,"right")}
+    </div>
+    <div class="bookActions">
+      <button class="btn" data-action="${done?"closeBook":"bookNext"}">${done?"合上书":"翻页"}</button>
+    </div>
+  </div>`,"soft");
+}
+function finalWall(){
+  const middle=S.soph==="B"
+    ?`<div class="polaroid" style="--r:-2deg;--bgimg:linear-gradient(#09152a,#070d16)"><div class="img"></div><div class="cap">大二。<br>第一次做出来的观星地图。</div></div>`
+    :`<div class="polaroid" style="--r:-2deg;--bgimg:linear-gradient(135deg,#1e3048,#0e1723)"><div class="img"></div><div class="cap">大二。<br>那条被自己跑通的路线。</div></div>`;
+  const junior=S.junior==="B"
+    ?`<div class="polaroid" style="--r:2deg;--bgimg:radial-gradient(circle at 58% 44%,#e4d7ae 0 7%,#08101e 9%)"><div class="img"></div><div class="cap">大三。<br>一整学期里，很普通的某个晚上。</div></div>`
+    :`<div class="polaroid" style="--r:2deg;--bgimg:linear-gradient(145deg,#263954,#111824)"><div class="img"></div><div class="cap">大三。<br>见习遴选前整理过的材料。</div></div>`;
+  show(`<div class="finalWall fade"><div class="kicker">毕业前最后一晚</div><h2>照片墙已经和刚入学时不一样了。</h2>
+    <div class="photoGrid">
+      <div class="polaroid" style="--r:-3deg;--bgimg:linear-gradient(#18294a,#0d1524)"><div class="img"></div><div class="cap">老家楼顶。<br>最早带来的那张。</div></div>
+      <div class="polaroid" style="--r:3deg;--bgimg:radial-gradient(circle at 60% 40%,#e8dfc0 0 16%,#263753 18%)"><div class="img"></div><div class="cap">那张一直拍不清的月亮。</div></div>
+      <div class="polaroid" style="--r:1deg;--bgimg:linear-gradient(145deg,#26344a,#111824)"><div class="img"></div><div class="cap">大一。<br>第一次上机考核结束。</div></div>
+      ${middle}
+      ${junior}
+      <div class="polaroid" style="--r:-1deg;--bgimg:linear-gradient(#31405a 0 68%,#1b2027 69%)"><div class="img"></div><div class="cap">毕业前。<br>宿舍里最后一张。</div></div>
+    </div>
+    <div class="quote">最后看了一眼墙上的照片。</div>
+    <div class="actions"><button class="btn" data-action="finishGame">关灯</button></div>
+  </div>`);
+}
+function finishGame(){
+  show(`<div class="story fade"><div class="chapter">大学满分攻略</div><div class="big" style="font-size:38px">END</div><p>没有评分，也没有完成度。</p><p class="small">${R[S.route].name} · ${S.soph}${S.junior}</p><div class="actions"><button class="btn" data-action="reload">重新试玩</button></div></div>`);
+}
+
+/* keyboard */
+document.addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();S.keys[k]=true;
+  if((k===" "||k==="w"||k==="arrowup")&&S.currentPlayer&&S.currentPlayer.onGround&&S.gameRAF){S.currentPlayer.vy=-11;e.preventDefault()}
+});
+document.addEventListener("keyup",e=>{S.keys[e.key.toLowerCase()]=false});
+
+/* click routing */
+document.addEventListener("click",e=>{
+  const action=e.target.closest("[data-action]"),routeEl=e.target.closest("[data-route]"),tab=e.target.closest("[data-tab]"),
+        evidence=e.target.closest("[data-evidence]"),pfslot=e.target.closest("[data-pfslot]"),aim=e.target.closest("[data-aim]");
+
+  if(routeEl){S.route=routeEl.dataset.route;hide();routePlan();return}
+  if(tab){phone(tab.dataset.tab);return}
+  if(evidence){S.pfPick=+evidence.dataset.evidence;renderPF();return}
+  if(pfslot){
+    const i=+pfslot.dataset.pfslot;
+    if(S.pfPick!==null){
+      const old=S.portfolioSelected.indexOf(S.pfPick);if(old>=0)S.portfolioSelected[old]=undefined;
+      S.portfolioSelected[i]=S.pfPick;S.pfPick=null;renderPF();
+    }return;
+  }
+  if(aim){
+    const m=aim.dataset.aim,step=6;
+    if(m==="left")S.aimX-=step;if(m==="right")S.aimX+=step;if(m==="up")S.aimY-=step;if(m==="down")S.aimY+=step;
+    S.aimX=Math.max(6,Math.min(94,S.aimX));S.aimY=Math.max(8,Math.min(92,S.aimY));return;
+  }
+  if(!action)return;
+  const a=action.dataset.action;
+
+  if(a==="photoWall")photoWall()
+  else if(a==="photoWallBack"){hide();S.stage="routePick";enable({phone:true});brief("手机震了一下。")}
+  else if(a==="phone"){phone(S.stage==="anxiety"?"info":(S.stage==="sophChoice"||S.stage==="juniorChoice"?"msg":"guide"))}
+  else if(a==="afterRoutePlan"){hide();freshmanBridge()}
+  else if(a==="armExam"){hide();S.stage="exam";enable({phone:true,pc:true});brief("电脑里已经出现了上机考核入口。")}
+  else if(a==="computer"){
+    if(S.stage==="exam")startPlatformer("exam");
+    else if(S.stage==="sophChoice")startPlatformer("route");
+    else if(S.stage==="juniorChoice")juniorAGame();
+  }
+  else if(a==="door"){
+    if(S.stage==="sophChoice")enterObservatory("soph");
+    else if(S.stage==="juniorChoice")enterObservatory("junior");
+  }
+  else if(a==="finishExam"){
+    hide();S.guide[0]=S.guide[1]=true;enable({});
+    freshmanGuideFinish();
+  }
+  else if(a==="afterFreshmanGuide"){
+    hide();S.stage="anxiety";enable({phone:true});brief("手机开始一条接一条地震。");anxietyBurst();
+  }
+  else if(a==="toAnxiety"){
+    hide();S.stage="anxiety";enable({phone:true});brief("手机开始一条接一条地震。");anxietyBurst();
+  }
+  else if(a==="closePhone"){
+    hide();
+    if(S.stage==="anxiety"){
+      clearPushes();
+      sophomoreOpening();
+    }else if(S.stage==="sophChoice"){
+      sophStruggle();
+    }else if(S.stage==="juniorChoice"){
+      juniorStruggle();
+    }
+  }
+  else if(a==="enterSoph"){hide();S.stage="sophChoice";enable({phone:true});brief("手机里有两条新的周六活动消息。")}
+  else if(a==="armSophChoice"){hide();enable({phone:true,pc:true,doorGo:true});brief("会议链接已经到点；门外的集合时间也快到了。")}
+  else if(a==="finishSophA"){S.soph="A";S.guide[2]=true;hide();afterSoph()}
+  else if(a==="toJunior"){hide();juniorOpening()}
+  else if(a==="enterJunior"){hide();S.stage="juniorChoice";enable({phone:true});brief("学院和天文社都发来了新消息。")}
+  else if(a==="armJuniorChoice"){hide();enable({phone:true,pc:true,doorGo:true});brief("两个确认页面都停在最后一步。")}
+  else if(a==="resetPF"){juniorAGame()}
+  else if(a==="submitPF"){
+    if(S.portfolioSelected.filter(x=>x!==undefined).length<3){$("#pfFeedback").textContent="三项材料还没放满。";$("#pfFeedback").className="feedback bad";return}
+    $("#pfFeedback").textContent="材料已提交。";$("#pfFeedback").className="feedback good";
+    setTimeout(()=>show(`<div class="card center"><div class="kicker">面谈</div><div class="quote">“你为什么现在想来看看这个方向？”</div><p>我翻到刚刚提交的三项经历。第一次觉得，这四年并不是几张互不相关的卡片。</p><div class="actions"><button class="btn" data-action="finishJuniorA">结束面谈</button></div></div>`),450);
+  }
+  else if(a==="finishJuniorA"){S.junior="A";hide();ending()}
+  else if(a==="talkNpc"){showDialog()}
+  else if(a==="nextDialog"){
+    S.dialogIndex++;
+    const lines=dialogLines();
+    if(S.dialogIndex<lines.length)showDialog();
+    else{
+      const box=$("#dialog");box.classList.add("hidden");$("#npcHot").disabled=true;$("#npcHot").classList.remove("available");$("#scopeHot").disabled=false;$("#scopeHot").classList.add("available");
+    }
+  }
+  else if(a==="useScope"){S.obsMode==="soph"?scratchGame():hardFocusGame()}
+  else if(a==="takeSkyPhoto")generatedSkyMap()
+  else if(a==="returnFromMap"){hide();postDialog()}
+  else if(a==="afterHardFocus"){hide();postDialog()}
+  else if(a==="nextPost"){
+    S.postIndex++;
+    if(S.postIndex<S.postLines.length){
+      const [n,l]=S.postLines[S.postIndex],box=$("#dialog");box.innerHTML=`<div class="name">${n}</div><div class="line">${l}</div><div class="next">点击继续</div>`;
+    }else{
+      $("#dialog").classList.add("hidden");
+      if(S.obsMode==="soph"){S.soph="B";restoreDorm();afterSoph()}
+      else{S.junior="B";restoreDorm();ending()}
+    }
+  }
+  else if(a==="bookNext"){
+    const book=$("#book");if(book)book.classList.add("turn");
+    S.stageTimer=setTimeout(()=>{S.bookIndex+=2;renderBook()},430);
+  }
+  else if(a==="closeBook"){finalWall()}
+  else if(a==="endingNext"){finalWall()}
+  else if(a==="finishGame")finishGame()
+  else if(a==="reload")location.reload();
+});
+
+document.addEventListener("input",e=>{
+  if(e.target&&e.target.id==="focusSlider")S.focusValue=+e.target.value;
+});
+
+enable({});
+})();
+</script>
+</body>
+</html>
